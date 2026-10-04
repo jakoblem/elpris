@@ -40,6 +40,10 @@ const els = {
   totalHelp: document.getElementById("totalHelp"),
   quickGridProfile: document.getElementById("quickGridProfile"),
   quickGridSelect: document.getElementById("quickGridSelect"),
+  postcodeWrap: document.getElementById("postcodeWrap"),
+  postcodeInput: document.getElementById("postcodeInput"),
+  postcodeLabel: document.getElementById("postcodeLabel"),
+  postcodeHint: document.getElementById("postcodeHint"),
   minPrice: document.getElementById("minPrice"),
   minTime: document.getElementById("minTime"),
   avgPrice: document.getElementById("avgPrice"),
@@ -82,6 +86,47 @@ function loadTariff() {
 function saveTariff(tariff) {
   state.tariff = tariff;
   localStorage.setItem("elpris-tariff", JSON.stringify(tariff));
+}
+
+function postcodeKey(area) {
+  return "elpris-postcode-" + area.toLowerCase();
+}
+
+function loadAreaPostcode(area) {
+  return localStorage.getItem(postcodeKey(area)) || "";
+}
+
+function postcodeLabelForArea(area) {
+  return area === "DK1" ? "Postnummer DK1 (vest)" : area === "DK2" ? "Postnummer DK2 (øst)" : "Postnummer SE4 (syd)";
+}
+
+function updatePostcodeUi() {
+  els.postcodeLabel.textContent = postcodeLabelForArea(state.area);
+  els.postcodeInput.value = loadAreaPostcode(state.area);
+  els.postcodeInput.placeholder = state.area === "SE4" ? "fx 211 20" : "fx 2100";
+  els.postcodeHint.textContent = state.area === "SE4"
+    ? "Gemmes kun i denne browser for SE4."
+    : "Gemmes kun i denne browser for " + state.area + ". Netselskabet kan altid vælges manuelt.";
+}
+
+function suggestGridFromPostcode() {
+  if (state.area === "SE4" || !state.tariffData) return;
+  const digits = (els.postcodeInput.value || "").replace(/\D/g, "");
+  if (digits.length !== 4) return;
+
+  // Conservative suggestions only for broad, well-known areas. The selector
+  // remains user-overridable because grid boundaries do not perfectly follow postcodes.
+  const n = Number(digits);
+  let profileId = null;
+  if (state.area === "DK2" && n >= 1000 && n <= 2999) profileId = "radius";
+
+  if (profileId && allGridProfiles().some(function (p) { return p.id === profileId; })) {
+    applyGridProfile(profileId);
+    saveTariff(state.tariff);
+    populateGridProfiles();
+    fillTariffForm();
+    render();
+  }
 }
 
 function setActiveButtons(container, key, value) {
@@ -542,6 +587,7 @@ function render() {
   setActiveButtons(els.areaControl, "area", state.area);
   setActiveButtons(els.resolutionControl, "resolution", state.resolution);
   setActiveButtons(els.viewControl, "view", state.view);
+  updatePostcodeUi();
   updateTotalUi();
 
   const items = currentItems();
@@ -574,6 +620,7 @@ els.areaControl.addEventListener("click", function (event) {
   if (!button) return;
   state.area = button.dataset.area;
   localStorage.setItem("elpris-area", state.area);
+  updatePostcodeUi();
   render();
 });
 
@@ -601,6 +648,12 @@ els.totalToggle.addEventListener("change", function () {
 
 els.settingsButton.addEventListener("click", openSettings);
 els.closeSettings.addEventListener("click", function () { els.settingsDialog.close(); });
+
+els.postcodeInput.addEventListener("change", function () {
+  localStorage.setItem(postcodeKey(state.area), els.postcodeInput.value.trim());
+  suggestGridFromPostcode();
+  updatePostcodeUi();
+});
 
 els.quickGridSelect.addEventListener("change", function () {
   applyGridProfile(els.quickGridSelect.value);
