@@ -1,0 +1,62 @@
+name: Opdater elpriser og GitHub Pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Kør i et bredt UTC-vindue og lad scriptet hente aktuelle data.
+    # Det dækker kl. 13 dansk tid både ved sommer- og vintertid.
+    - cron: "2-57/5 11-13 * * *"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "elpris-pages"
+  cancel-in-progress: false
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Hent repository
+        uses: actions/checkout@v4
+
+      - name: Sæt Python op
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Hent priser fra Energinet
+        run: python scripts/fetch_prices.py
+
+      - name: Gem nye priser i repository
+        run: |
+          if git diff --quiet -- data/prices.json; then
+            echo "Ingen nye prisdata."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/prices.json
+            git commit -m "Opdater elpriser"
+            git push
+          fi
+
+      - name: Konfigurer GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload side
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+
+      - name: Udgiv GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
