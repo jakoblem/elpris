@@ -1,0 +1,20 @@
+{
+  "generated_at": null,
+  "source": "Energinet Energi Data Service / DayAheadPrices",
+  "unit": "ore_per_kwh",
+  "areas": {
+    "DK1": [],
+    "DK2": [],
+    "SE4": []
+  },
+  "coverage": {
+    "tomorrow_date": null,
+    "tomorrow_expected_intervals": 96,
+    "tomorrow_counts": {
+      "DK1": 0,
+      "DK2": 0,
+      "SE4": 0
+    },
+    "tomorrow_complete": false
+  }
+}
