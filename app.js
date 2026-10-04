@@ -1,5 +1,7 @@
 const DEFAULT_TARIFF = {
-  configured: false,
+  configured: true,
+  profileId: "median",
+  hourly: null,
   national: 12.3,
   offpeak: 0,
   standard: 0,
@@ -8,12 +10,15 @@ const DEFAULT_TARIFF = {
   vat: 25
 };
 
+const storedTotal = localStorage.getItem("elpris-total");
+
 const state = {
   area: localStorage.getItem("elpris-area") || "DK2",
-  resolution: localStorage.getItem("elpris-resolution") || "15m",
-  view: localStorage.getItem("elpris-view") || "graph",
-  includeTotal: localStorage.getItem("elpris-total") === "true",
+  resolution: localStorage.getItem("elpris-resolution") || "1h",
+  view: localStorage.getItem("elpris-view") || "table",
+  includeTotal: storedTotal === null ? true : storedTotal === "true",
   data: null,
+  tariffData: null,
   tariff: loadTariff()
 };
 
@@ -42,6 +47,8 @@ const els = {
   closeSettings: document.getElementById("closeSettings"),
   tariffForm: document.getElementById("tariffForm"),
   resetTariffs: document.getElementById("resetTariffs"),
+  gridProfile: document.getElementById("gridProfile"),
+  tariffNote: document.getElementById("tariffNote"),
   nationalCharge: document.getElementById("nationalCharge"),
   offpeakCharge: document.getElementById("offpeakCharge"),
   standardCharge: document.getElementById("standardCharge"),
@@ -53,7 +60,10 @@ const els = {
 function loadTariff() {
   try {
     const raw = localStorage.getItem("elpris-tariff");
-    return raw ? Object.assign({}, DEFAULT_TARIFF, JSON.parse(raw)) : Object.assign({}, DEFAULT_TARIFF);
+    if (!raw) return Object.assign({}, DEFAULT_TARIFF);
+    const parsed = Object.assign({}, DEFAULT_TARIFF, JSON.parse(raw));
+    if (!parsed.profileId) parsed.profileId = "custom";
+    return parsed;
   } catch {
     return Object.assign({}, DEFAULT_TARIFF);
   }
@@ -106,12 +116,20 @@ function formatUpdated(iso) {
   }).format(new Date(iso));
 }
 
-function tariffForEpoch(epochMs) {
-  const hour = Number(new Intl.DateTimeFormat("en-GB", {
+function localHour(epochMs) {
+  return Number(new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Copenhagen",
     hour: "2-digit",
     hourCycle: "h23"
   }).format(new Date(epochMs)));
+}
+
+function tariffForEpoch(epochMs) {
+  const hour = localHour(epochMs);
+
+  if (Array.isArray(state.tariff.hourly) && state.tariff.hourly.length === 24) {
+    return Number(state.tariff.hourly[hour] || 0);
+  }
 
   if (hour < 6) return state.tariff.offpeak;
   if (hour < 17) return state.tariff.standard;
@@ -181,13 +199,67 @@ function currentItems() {
   return state.resolution === "1h" ? hourlyItems(items) : items;
 }
 
+function median(values) {
+  const sorted = values.filter(Number.isFinite).slice().sort(function (a, b) { return a - b; });
+  if (!sorted.length) return 0;
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function allGridProfiles() {
+  if (!state.tariffData) return [];
+  const profiles = [];
+  if (state.tariffData.default_profile) profiles.push(state.tariffData.default_profile);
+  return profiles.concat(state.tariffData.profiles || []);
+}
+
+function populateGridProfiles() {
+  if (!state.tariffData) return;
+  const current = state.tariff.profileId || "median";
+  els.gridProfile.innerHTML = "";
+
+  allGridProfiles().forEach(function (profile) {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    option.textContent = profile.name;
+    els.gridProfile.appendChild(option);
+  });
+
+  const custom = document.createElement("option");
+  custom.value = "custom";
+  custom.textContent = "Tilpasset";
+  els.gridProfile.appendChild(custom);
+
+  els.gridProfile.value = allGridProfiles().some(function (p) { return p.id === current; }) ? current : "custom";
+}
+
+function applyGridProfile(profileId) {
+  if (profileId === "custom") {
+    state.tariff.profileId = "custom";
+    state.tariff.hourly = null;
+    return;
+  }
+
+  const profile = allGridProfiles().find(function (item) { return item.id === profileId; });
+  if (!profile || !Array.isArray(profile.hourly_ex_vat_ore) || profile.hourly_ex_vat_ore.length !== 24) return;
+
+  const hourly = profile.hourly_ex_vat_ore.map(Number);
+  state.tariff.profileId = profileId;
+  state.tariff.hourly = hourly;
+  state.tariff.offpeak = median(hourly.slice(0, 6));
+  state.tariff.standard = median(hourly.slice(6, 17).concat(hourly.slice(21, 24)));
+  state.tariff.peak = median(hourly.slice(17, 21));
+  state.tariff.configured = true;
+}
+
 function fillTariffForm() {
-  els.nationalCharge.value = state.tariff.national;
-  els.offpeakCharge.value = state.tariff.offpeak;
-  els.standardCharge.value = state.tariff.standard;
-  els.peakCharge.value = state.tariff.peak;
-  els.supplierCharge.value = state.tariff.supplier;
-  els.vatRate.value = state.tariff.vat;
+  if (els.gridProfile) els.gridProfile.value = state.tariff.profileId || "custom";
+  els.nationalCharge.value = Number(state.tariff.national || 0).toFixed(1);
+  els.offpeakCharge.value = Number(state.tariff.offpeak || 0).toFixed(1);
+  els.standardCharge.value = Number(state.tariff.standard || 0).toFixed(1);
+  els.peakCharge.value = Number(state.tariff.peak || 0).toFixed(1);
+  els.supplierCharge.value = Number(state.tariff.supplier || 0).toFixed(1);
+  els.vatRate.value = Number(state.tariff.vat || 0).toFixed(1);
 }
 
 function openSettings() {
@@ -205,10 +277,6 @@ function updateTotalUi() {
   els.settingsButton.disabled = isSe4;
 
   if (isSe4) {
-    if (state.includeTotal) {
-      state.includeTotal = false;
-      localStorage.setItem("elpris-total", "false");
-    }
     els.totalToggle.checked = false;
     els.totalHelp.textContent = "SE4 vises foreløbig som spotpris. Svenske nettariffer og afgifter kommer i en senere version.";
     return;
@@ -216,7 +284,8 @@ function updateTotalUi() {
 
   els.totalToggle.checked = state.includeTotal;
   if (state.includeTotal) {
-    els.totalHelp.textContent = "Ca. totalpris: spot + dine tarifindstillinger + moms. Faste abonnementer er ikke medregnet.";
+    const profileName = (allGridProfiles().find(function (p) { return p.id === state.tariff.profileId; }) || {}).name;
+    els.totalHelp.textContent = "Ca. totalpris: spot + " + (profileName || "transport") + " + nationale tariffer/elafgift + moms. Faste abonnementer er ikke medregnet.";
   } else {
     els.totalHelp.textContent = "Spotpris vises uden nettarif, elafgift, leverandørtillæg og moms.";
   }
@@ -447,12 +516,6 @@ els.viewControl.addEventListener("click", function (event) {
 els.totalToggle.addEventListener("change", function () {
   if (state.area === "SE4") return;
 
-  if (els.totalToggle.checked && !state.tariff.configured) {
-    els.totalToggle.checked = false;
-    openSettings();
-    return;
-  }
-
   state.includeTotal = els.totalToggle.checked;
   localStorage.setItem("elpris-total", String(state.includeTotal));
   render();
@@ -461,8 +524,22 @@ els.totalToggle.addEventListener("change", function () {
 els.settingsButton.addEventListener("click", openSettings);
 els.closeSettings.addEventListener("click", function () { els.settingsDialog.close(); });
 
+els.gridProfile.addEventListener("change", function () {
+  applyGridProfile(els.gridProfile.value);
+  fillTariffForm();
+});
+
+[els.nationalCharge, els.offpeakCharge, els.standardCharge, els.peakCharge, els.supplierCharge, els.vatRate].forEach(function (input) {
+  input.addEventListener("input", function () {
+    state.tariff.profileId = "custom";
+    state.tariff.hourly = null;
+    els.gridProfile.value = "custom";
+  });
+});
+
 els.resetTariffs.addEventListener("click", function () {
   state.tariff = Object.assign({}, DEFAULT_TARIFF);
+  applyGridProfile("median");
   fillTariffForm();
 });
 
@@ -471,6 +548,8 @@ els.tariffForm.addEventListener("submit", function (event) {
 
   const tariff = {
     configured: true,
+    profileId: state.tariff.profileId || "custom",
+    hourly: state.tariff.profileId === "custom" ? null : state.tariff.hourly,
     national: Number(els.nationalCharge.value || 0),
     offpeak: Number(els.offpeakCharge.value || 0),
     standard: Number(els.standardCharge.value || 0),
@@ -485,22 +564,55 @@ els.tariffForm.addEventListener("submit", function (event) {
   render();
 });
 
+async function loadPrices() {
+  const response = await fetch("./data/prices.json?v=" + Date.now(), { cache: "no-store" });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  state.data = await response.json();
+  els.status.textContent = formatUpdated(state.data.generated_at);
+}
+
+async function loadTariffData() {
+  try {
+    const response = await fetch("./data/tariffs.json?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    state.tariffData = await response.json();
+    populateGridProfiles();
+
+    if (state.tariff.profileId === "median" && state.tariffData.default_profile && state.tariffData.default_profile.hourly_ex_vat_ore.length === 24) {
+      applyGridProfile("median");
+    } else if (state.tariff.profileId && state.tariff.profileId !== "custom") {
+      applyGridProfile(state.tariff.profileId);
+    }
+  } catch (error) {
+    console.warn("Kunne ikke hente tarifdata", error);
+  }
+}
+
 async function loadData() {
   try {
-    const response = await fetch("./data/prices.json?v=" + Date.now(), { cache: "no-store" });
-    if (!response.ok) throw new Error("HTTP " + response.status);
-    state.data = await response.json();
-    els.status.textContent = formatUpdated(state.data.generated_at);
+    await Promise.all([loadPrices(), loadTariffData()]);
+    fillTariffForm();
     render();
   } catch (error) {
     console.error(error);
     els.status.textContent = "Kunne ikke hente prisdata";
     els.emptyState.hidden = false;
     els.emptyState.querySelector("strong").textContent = "Prisdata mangler";
-    els.emptyState.querySelector("p").textContent = "Kør GitHub-handlingen manuelt eller prøv igen senere.";
+    els.emptyState.querySelector("p").textContent = "Prøv igen senere.";
+  }
+}
+
+async function refreshPrices() {
+  try {
+    const before = state.data && state.data.generated_at;
+    await loadPrices();
+    if (!before || before !== state.data.generated_at) render();
+  } catch (error) {
+    console.warn("Automatisk prisopdatering fejlede", error);
   }
 }
 
 fillTariffForm();
 render();
 loadData();
+setInterval(refreshPrices, 2 * 60 * 1000);
