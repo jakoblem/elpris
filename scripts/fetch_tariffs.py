@@ -144,7 +144,8 @@ def hourly_prices(record: dict) -> list[float] | None:
 
 def fetch_records() -> list[dict]:
     params = {
-        "end": "now",
+        "start": "StartOfYear-P1Y",
+        "end": "StartOfYear+P2Y",
         "filter": json.dumps({"ChargeType": ["D03"]}, separators=(",", ":")),
         "sort": "ValidFrom DESC",
         "limit": "10000",
@@ -167,57 +168,62 @@ def fetch_records() -> list[dict]:
 
 
 def profile_for_company(records: list[dict], company: dict, now: datetime):
-    # Keep the best current row for each distinct ChargeOwner, because large
-    # companies such as N1 can have several grid-area suffixes.
-    by_owner: dict[str, tuple[int, datetime, dict]] = {}
-
+    by_period = {}
     for record in records:
         owner = str(record.get("ChargeOwner") or "").strip()
         if not owner or not owner_matches(owner, company["prefixes"]):
             continue
-        if not is_current(record, now):
-            continue
-
         score = candidate_score(record)
-        if score < 0:
+        if score < 0 or hourly_prices(record) is None:
             continue
-
-        prices = hourly_prices(record)
-        if prices is None:
+        vf = parse_local(record.get("ValidFrom"))
+        if not vf:
             continue
+        key = (owner, vf.isoformat())
+        current = by_period.get(key)
+        if current is None or score > current[0]:
+            by_period[key] = (score, record)
 
-        start = parse_local(record.get("ValidFrom")) or datetime.min.replace(tzinfo=COPENHAGEN)
-        current = by_owner.get(owner)
-        candidate = (score, start, record)
-        if current is None or (score, start) > (current[0], current[1]):
-            by_owner[owner] = candidate
-
-    owner_profiles = []
-    for owner, (_, _, record) in sorted(by_owner.items()):
-        prices = hourly_prices(record)
-        if prices:
-            owner_profiles.append((owner, prices, record))
-
-    if not owner_profiles:
+    rows = [entry[1] for entry in by_period.values()]
+    if not rows:
         return None
 
-    hourly = [
-        round(statistics.median(profile[1][hour] for profile in owner_profiles), 4)
-        for hour in range(24)
-    ]
+    windows = {}
+    for record in rows:
+        owner = str(record.get("ChargeOwner") or "").strip()
+        vf = parse_local(record.get("ValidFrom"))
+        vt = parse_local(record.get("ValidTo"))
+        key = (vf.isoformat(), vt.isoformat() if vt else None)
+        windows.setdefault(key, []).append((owner, hourly_prices(record)))
 
-    valid_from_values = [
-        parse_local(profile[2].get("ValidFrom"))
-        for profile in owner_profiles
-        if parse_local(profile[2].get("ValidFrom"))
-    ]
+    periods = []
+    for (valid_from, valid_to), group in windows.items():
+        hourly = [round(statistics.median(item[1][hour] for item in group), 4) for hour in range(24)]
+        periods.append({
+            "valid_from": valid_from,
+            "valid_to": valid_to,
+            "hourly_ex_vat_ore": hourly,
+            "charge_owners": sorted({item[0] for item in group}),
+        })
+    periods.sort(key=lambda p: p["valid_from"])
+
+    current_period = None
+    for period in periods:
+        vf = parse_local(period["valid_from"])
+        vt = parse_local(period["valid_to"])
+        if vf <= now and (vt is None or now < vt):
+            current_period = period
+    if current_period is None:
+        current_period = periods[-1]
 
     return {
         "id": company["id"],
         "name": company["name"],
-        "hourly_ex_vat_ore": hourly,
-        "charge_owners": [profile[0] for profile in owner_profiles],
-        "valid_from": max(valid_from_values).date().isoformat() if valid_from_values else None,
+        "hourly_ex_vat_ore": current_period["hourly_ex_vat_ore"],
+        "charge_owners": current_period["charge_owners"],
+        "valid_from": current_period["valid_from"],
+        "valid_to": current_period["valid_to"],
+        "periods": periods,
     }
 
 
