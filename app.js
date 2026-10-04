@@ -478,7 +478,7 @@ function renderGraph(items) {
   tooltip.hidden = true;
   tooltip.setAttribute("role", "status");
   tooltip.setAttribute("aria-live", "polite");
-  els.graphWrap.parentNode.insertBefore(tooltip, els.graphWrap);
+  els.graphWrap.insertAdjacentElement("afterend", tooltip);
 
   for (let i = 0; i < 5; i += 1) {
     const value = yMin + ((yMax - yMin) * i / 4);
