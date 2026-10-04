@@ -35,6 +35,8 @@ const els = {
   browserHint: document.getElementById("browserHint"),
   browserHintText: document.getElementById("browserHintText"),
   dismissBrowserHint: document.getElementById("dismissBrowserHint"),
+  installHelpText: document.getElementById("installHelpText"),
+  installButton: document.getElementById("installButton"),
   areaControl: document.getElementById("areaControl"),
   resolutionControl: document.getElementById("resolutionControl"),
   viewControl: document.getElementById("viewControl"),
@@ -825,14 +827,45 @@ render();
 loadData();
 setInterval(refreshPrices, 2 * 60 * 1000);
 
+let deferredInstallPrompt = null;
+
+window.addEventListener("beforeinstallprompt", function (event) {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  if (els.installButton) els.installButton.hidden = false;
+});
+
 function setupInstallExperience() {
   const ua = navigator.userAgent || "";
   const inApp = /(FBAN|FBAV|Instagram|Line\/|GSA\/|GoogleApp|wv\)|; wv|Gmail|Chat)/i.test(ua);
   const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
   const dismissed = sessionStorage.getItem("elpris-browser-hint") === "hidden";
 
+  const isiOS = /iPhone|iPad|iPod/i.test(ua);
+  const isFirefox = /Firefox\//i.test(ua);
+  if (els.installHelpText) {
+    if (standalone) {
+      els.installHelpText.textContent = "Elpris er åbnet som installeret app.";
+    } else if (isiOS) {
+      els.installHelpText.textContent = "iPhone/iPad: Åbn i Safari → Del → Føj til hjemmeskærm.";
+    } else if (isFirefox) {
+      els.installHelpText.textContent = "Firefox på Android: Menu → Føj app til startskærm. Chrome kan også tilbyde Installer app.";
+    } else {
+      els.installHelpText.textContent = "Android: brug Installer app/Føj til startskærm. iPhone/iPad: Safari → Del → Føj til hjemmeskærm.";
+    }
+  }
+
+  if (els.installButton) {
+    els.installButton.addEventListener("click", async function () {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      els.installButton.hidden = true;
+    });
+  }
+
   if (inApp && !standalone && !dismissed) {
-    const isiOS = /iPhone|iPad|iPod/i.test(ua);
     els.browserHintText.textContent = isiOS
       ? "Åbn siden i Safari og vælg Del → Føj til hjemmeskærm."
       : "Åbn siden i Chrome og vælg Installer app eller Føj til startskærm.";

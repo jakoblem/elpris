@@ -649,3 +649,16 @@ tr.charge-window td:first-child {
     padding: 4px 0;
   }
 }
+
+.install-help {
+  margin-top: 12px;
+  padding: 14px;
+}
+.install-help h2 { margin-bottom: 5px; }
+.install-help p {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.45;
+}
+.install-help .primary-button { min-height: 42px; }
