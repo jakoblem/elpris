@@ -401,13 +401,48 @@ function renderSummary(items) {
   els.maxTime.textContent = formatClock(high.start) + "–" + formatClock(high.end);
 }
 
+function priceBand(value, sortedPrices) {
+  if (!sortedPrices.length) return 2;
+  const rank = sortedPrices.findIndex(function (price) { return price >= value; });
+  const percentile = (rank < 0 ? sortedPrices.length - 1 : rank) / Math.max(1, sortedPrices.length - 1);
+  if (percentile <= 0.20) return 0;
+  if (percentile <= 0.40) return 1;
+  if (percentile <= 0.60) return 2;
+  if (percentile <= 0.80) return 3;
+  return 4;
+}
+
+function bestChargingWindow(items, hours) {
+  if (state.resolution !== "1h" || items.length < hours) return new Set();
+  let bestStart = -1;
+  let bestAverage = Infinity;
+
+  for (let i = 0; i <= items.length - hours; i += 1) {
+    const slice = items.slice(i, i + hours);
+    const contiguous = slice.every(function (item, j) {
+      return j === 0 || item.start - slice[j - 1].start === 3600000;
+    });
+    if (!contiguous) continue;
+    const average = slice.reduce(function (sum, item) { return sum + displayedPrice(item); }, 0) / hours;
+    if (average < bestAverage) {
+      bestAverage = average;
+      bestStart = i;
+    }
+  }
+
+  if (bestStart < 0) return new Set();
+  return new Set(items.slice(bestStart, bestStart + hours).map(function (item) { return item.start; }));
+}
+
 function renderTable(items) {
   els.tableBody.innerHTML = "";
   if (!items.length) return;
 
   const prices = items.map(displayedPrice);
+  const sortedPrices = prices.slice().sort(function (a, b) { return a - b; });
   const min = Math.min.apply(null, prices);
   const max = Math.max.apply(null, prices);
+  const chargingWindow = bestChargingWindow(items, 5);
   let lastDay = "";
 
   items.forEach(function (item) {
@@ -425,11 +460,19 @@ function renderTable(items) {
 
     const price = displayedPrice(item);
     const row = document.createElement("tr");
+    row.classList.add("price-band-" + priceBand(price, sortedPrices));
     if (Math.abs(price - min) < 0.0001) row.classList.add("low-row");
     if (Math.abs(price - max) < 0.0001) row.classList.add("high-row");
+    if (chargingWindow.has(item.start)) row.classList.add("charge-window");
 
     const timeCell = document.createElement("td");
     timeCell.textContent = formatClock(item.start) + "–" + formatClock(item.end);
+    if (chargingWindow.has(item.start)) {
+      const badge = document.createElement("span");
+      badge.className = "charge-badge";
+      badge.textContent = " oplad";
+      timeCell.appendChild(badge);
+    }
 
     const priceCell = document.createElement("td");
     priceCell.className = "price-cell";
