@@ -11,10 +11,11 @@ const DEFAULT_TARIFF = {
 };
 
 const SE4_DEFAULT = {
-  energyTax: 36.0,
-  grid: 30.0,
-  supplier: 5.0,
-  vat: 25
+  energyTaxSekOre: 36.0,
+  gridSekOre: 30.0,
+  supplierSekOre: 5.0,
+  vat: 25,
+  dkkPerSek: 0.6636
 };
 
 const storedTotal = localStorage.getItem("elpris-total");
@@ -147,7 +148,12 @@ function tariffForEpoch(epochMs) {
 function displayedPrice(item) {
   if (!state.includeTotal) return item.price;
   if (state.area === "SE4") {
-    const beforeVatSe4 = item.price + SE4_DEFAULT.energyTax + SE4_DEFAULT.grid + SE4_DEFAULT.supplier;
+    const swedishChargesDkkOre = (
+      SE4_DEFAULT.energyTaxSekOre
+      + SE4_DEFAULT.gridSekOre
+      + SE4_DEFAULT.supplierSekOre
+    ) * SE4_DEFAULT.dkkPerSek;
+    const beforeVatSe4 = item.price + swedishChargesDkkOre;
     return beforeVatSe4 * (1 + SE4_DEFAULT.vat / 100);
   }
   const beforeVat = item.price
@@ -290,7 +296,7 @@ function updateTotalUi() {
 
   if (isSe4) {
     els.totalHelp.textContent = state.includeTotal
-      ? "Ca. SE4-forbrugerpris: spot + 36 öre/kWh svensk energiskat + ca. 30 öre net + 5 öre leverandørtillæg + 25 % moms."
+      ? "Ca. SE4-forbrugerpris inkl. svenske afgifter, net og moms."
       : "SE4 spotpris uden svensk energiskat, net, leverandørtillæg og moms.";
     return;
   }
