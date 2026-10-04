@@ -38,6 +38,8 @@ const els = {
   totalToggle: document.getElementById("totalToggle"),
   settingsButton: document.getElementById("settingsButton"),
   totalHelp: document.getElementById("totalHelp"),
+  quickGridProfile: document.getElementById("quickGridProfile"),
+  quickGridSelect: document.getElementById("quickGridSelect"),
   minPrice: document.getElementById("minPrice"),
   minTime: document.getElementById("minTime"),
   avgPrice: document.getElementById("avgPrice"),
@@ -234,12 +236,18 @@ function populateGridProfiles() {
   if (!state.tariffData) return;
   const current = state.tariff.profileId || "median";
   els.gridProfile.innerHTML = "";
+  els.quickGridSelect.innerHTML = "";
 
   allGridProfiles().forEach(function (profile) {
     const option = document.createElement("option");
     option.value = profile.id;
     option.textContent = profile.name;
     els.gridProfile.appendChild(option);
+
+    const quickOption = document.createElement("option");
+    quickOption.value = profile.id;
+    quickOption.textContent = profile.id === "median" ? "Standard (median)" : profile.name;
+    els.quickGridSelect.appendChild(quickOption);
   });
 
   const custom = document.createElement("option");
@@ -248,6 +256,7 @@ function populateGridProfiles() {
   els.gridProfile.appendChild(custom);
 
   els.gridProfile.value = allGridProfiles().some(function (p) { return p.id === current; }) ? current : "custom";
+  els.quickGridSelect.value = allGridProfiles().some(function (p) { return p.id === current; }) ? current : "median";
 }
 
 function applyGridProfile(profileId) {
@@ -290,6 +299,7 @@ function openSettings() {
 
 function updateTotalUi() {
   const isSe4 = state.area === "SE4";
+  els.quickGridProfile.hidden = isSe4 || !state.includeTotal;
   els.totalToggle.disabled = false;
   els.settingsButton.disabled = isSe4;
   els.totalToggle.checked = state.includeTotal;
@@ -577,6 +587,14 @@ els.totalToggle.addEventListener("change", function () {
 
 els.settingsButton.addEventListener("click", openSettings);
 els.closeSettings.addEventListener("click", function () { els.settingsDialog.close(); });
+
+els.quickGridSelect.addEventListener("change", function () {
+  applyGridProfile(els.quickGridSelect.value);
+  saveTariff(state.tariff);
+  populateGridProfiles();
+  fillTariffForm();
+  render();
+});
 
 els.gridProfile.addEventListener("change", function () {
   applyGridProfile(els.gridProfile.value);
