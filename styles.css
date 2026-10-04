@@ -587,24 +587,27 @@ dialog form { padding: 18px; }
   }
 }
 
-/* Relative 24-hour price scale: no yellow, optimized for quick scanning. */
-.price-band-0 td { background: color-mix(in srgb, var(--low) 18%, transparent); }
-.price-band-1 td { background: color-mix(in srgb, var(--low) 8%, transparent); }
-.price-band-2 td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
-.price-band-3 td { background: color-mix(in srgb, var(--high) 8%, transparent); }
-.price-band-4 td { background: color-mix(in srgb, var(--high) 18%, transparent); }
+/* Relative 24-hour price scale.
+   Blue = cheaper, orange = more expensive. Lightness + labels mean color is
+   not the only signal, improving usability for common color-vision deficiencies. */
+.price-band-0 td { background: color-mix(in srgb, #0072b2 22%, transparent); }
+.price-band-1 td { background: color-mix(in srgb, #56b4e9 15%, transparent); }
+.price-band-2 td { background: color-mix(in srgb, var(--muted) 5%, transparent); }
+.price-band-3 td { background: color-mix(in srgb, #e69f00 12%, transparent); }
+.price-band-4 td { background: color-mix(in srgb, #d55e00 22%, transparent); }
 
 tr.charge-window td:first-child {
-  box-shadow: inset 4px 0 0 var(--low);
+  box-shadow: inset 5px 0 0 #0072b2;
 }
 
 .charge-badge {
   display: inline-block;
   margin-left: 7px;
   padding: 2px 6px;
+  border: 1px solid currentColor;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--low) 18%, transparent);
-  color: var(--low);
+  background: color-mix(in srgb, #0072b2 12%, transparent);
+  color: #0072b2;
   font-size: .67rem;
   font-weight: 850;
   letter-spacing: .02em;
@@ -615,6 +618,6 @@ tr.charge-window td:first-child {
   .price-band-0 td, .price-band-1 td, .price-band-2 td, .price-band-3 td, .price-band-4 td {
     background: transparent;
   }
-  tr.price-band-0 td:first-child, tr.price-band-1 td:first-child { border-left: 5px solid var(--low); }
-  tr.price-band-3 td:first-child, tr.price-band-4 td:first-child { border-left: 5px solid var(--high); }
+  tr.price-band-0 td:first-child, tr.price-band-1 td:first-child { border-left: 5px solid #0072b2; }
+  tr.price-band-3 td:first-child, tr.price-band-4 td:first-child { border-left: 5px solid #d55e00; }
 }
