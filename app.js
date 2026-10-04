@@ -32,6 +32,9 @@ const state = {
 
 const els = {
   status: document.getElementById("status"),
+  browserHint: document.getElementById("browserHint"),
+  browserHintText: document.getElementById("browserHintText"),
+  dismissBrowserHint: document.getElementById("dismissBrowserHint"),
   areaControl: document.getElementById("areaControl"),
   resolutionControl: document.getElementById("resolutionControl"),
   viewControl: document.getElementById("viewControl"),
@@ -821,3 +824,31 @@ fillTariffForm();
 render();
 loadData();
 setInterval(refreshPrices, 2 * 60 * 1000);
+
+function setupInstallExperience() {
+  const ua = navigator.userAgent || "";
+  const inApp = /(FBAN|FBAV|Instagram|Line\/|GSA\/|GoogleApp|wv\)|; wv|Gmail|Chat)/i.test(ua);
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+  const dismissed = sessionStorage.getItem("elpris-browser-hint") === "hidden";
+
+  if (inApp && !standalone && !dismissed) {
+    const isiOS = /iPhone|iPad|iPod/i.test(ua);
+    els.browserHintText.textContent = isiOS
+      ? "Åbn siden i Safari og vælg Del → Føj til hjemmeskærm."
+      : "Åbn siden i Chrome og vælg Installer app eller Føj til startskærm.";
+    els.browserHint.hidden = false;
+  }
+
+  els.dismissBrowserHint.addEventListener("click", function () {
+    els.browserHint.hidden = true;
+    sessionStorage.setItem("elpris-browser-hint", "hidden");
+  });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(function (error) {
+      console.warn("Service worker kunne ikke registreres", error);
+    });
+  }
+}
+
+setupInstallExperience();
