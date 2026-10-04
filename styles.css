@@ -507,3 +507,21 @@ dialog form { padding: 18px; }
   .graph-axis-label { font-size: 22px; }
   .graph-line { stroke-width: 6; }
 }
+
+.graph-tooltip {
+  position: absolute;
+  z-index: 4;
+  top: 10px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 16px);
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: .92rem;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+}

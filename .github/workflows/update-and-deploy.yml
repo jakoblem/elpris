@@ -41,12 +41,12 @@ jobs:
 
       - name: Gem nye data
         run: |
-          if git diff --quiet -- data/prices.json data/tariffs.json; then
+          if git diff --quiet -- data/prices.json data/tariffs.json data/fx.json; then
             echo "Ingen nye data."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/prices.json data/tariffs.json
+            git add data/prices.json data/tariffs.json data/fx.json
             git commit -m "Opdater elpriser og tariffer"
             git push
           fi
