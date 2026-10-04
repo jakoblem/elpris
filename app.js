@@ -10,6 +10,13 @@ const DEFAULT_TARIFF = {
   vat: 25
 };
 
+const SE4_DEFAULT = {
+  energyTax: 36.0,
+  grid: 30.0,
+  supplier: 5.0,
+  vat: 25
+};
+
 const storedTotal = localStorage.getItem("elpris-total");
 
 const state = {
@@ -138,7 +145,11 @@ function tariffForEpoch(epochMs) {
 }
 
 function displayedPrice(item) {
-  if (!state.includeTotal || state.area === "SE4") return item.price;
+  if (!state.includeTotal) return item.price;
+  if (state.area === "SE4") {
+    const beforeVatSe4 = item.price + SE4_DEFAULT.energyTax + SE4_DEFAULT.grid + SE4_DEFAULT.supplier;
+    return beforeVatSe4 * (1 + SE4_DEFAULT.vat / 100);
+  }
   const beforeVat = item.price
     + Number(state.tariff.national || 0)
     + Number(tariffForEpoch(item.start) || 0)
@@ -273,16 +284,16 @@ function openSettings() {
 
 function updateTotalUi() {
   const isSe4 = state.area === "SE4";
-  els.totalToggle.disabled = isSe4;
+  els.totalToggle.disabled = false;
   els.settingsButton.disabled = isSe4;
+  els.totalToggle.checked = state.includeTotal;
 
   if (isSe4) {
-    els.totalToggle.checked = false;
-    els.totalHelp.textContent = "SE4 vises foreløbig som spotpris. Svenske nettariffer og afgifter kommer i en senere version.";
+    els.totalHelp.textContent = state.includeTotal
+      ? "Ca. SE4-forbrugerpris: spot + 36 öre/kWh svensk energiskat + ca. 30 öre net + 5 öre leverandørtillæg + 25 % moms."
+      : "SE4 spotpris uden svensk energiskat, net, leverandørtillæg og moms.";
     return;
   }
-
-  els.totalToggle.checked = state.includeTotal;
   if (state.includeTotal) {
     const profileName = (allGridProfiles().find(function (p) { return p.id === state.tariff.profileId; }) || {}).name;
     els.totalHelp.textContent = "Ca. totalpris: spot + " + (profileName || "transport") + " + nationale tariffer/elafgift + moms. Faste abonnementer er ikke medregnet.";
@@ -444,7 +455,12 @@ function renderGraph(items) {
     svg.appendChild(circle);
   });
 
-  const tickIndexes = Array.from(new Set([0, Math.floor((items.length - 1) / 4), Math.floor((items.length - 1) / 2), Math.floor((items.length - 1) * 3 / 4), items.length - 1]));
+  const targetTicks = state.resolution === "1h" ? 9 : 9;
+  const tickIndexes = Array.from(new Set(
+    Array.from({ length: targetTicks }, function (_, i) {
+      return Math.round(i * (items.length - 1) / (targetTicks - 1));
+    })
+  ));
   tickIndexes.forEach(function (idx) {
     const label = document.createElementNS(ns, "text");
     label.setAttribute("x", x(idx));
@@ -515,8 +531,6 @@ els.viewControl.addEventListener("click", function (event) {
 });
 
 els.totalToggle.addEventListener("change", function () {
-  if (state.area === "SE4") return;
-
   state.includeTotal = els.totalToggle.checked;
   localStorage.setItem("elpris-total", String(state.includeTotal));
   render();
