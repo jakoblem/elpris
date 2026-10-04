@@ -448,9 +448,10 @@ function renderGraph(items) {
   tickIndexes.forEach(function (idx) {
     const label = document.createElementNS(ns, "text");
     label.setAttribute("x", x(idx));
-    label.setAttribute("y", height - 13);
-    label.setAttribute("text-anchor", idx === 0 ? "start" : (idx === items.length - 1 ? "end" : "middle"));
+    label.setAttribute("y", height - pad.bottom + 18);
+    label.setAttribute("text-anchor", "start");
     label.setAttribute("class", "graph-label");
+    label.setAttribute("transform", "rotate(90 " + x(idx) + " " + (height - pad.bottom + 18) + ")");
     label.textContent = formatClock(items[idx].start);
     svg.appendChild(label);
   });
