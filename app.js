@@ -137,10 +137,7 @@ function setActiveButtons(container, key, value) {
 
 function formatPrice(value) {
   if (!Number.isFinite(value)) return "–";
-  return new Intl.NumberFormat("da-DK", {
-    minimumFractionDigits: Math.abs(value) < 10 ? 1 : 0,
-    maximumFractionDigits: 1
-  }).format(value) + " øre";
+  return Math.round(value).toLocaleString("da-DK") + " øre";
 }
 
 function formatClock(epochMs) {
