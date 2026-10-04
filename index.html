@@ -4,12 +4,22 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Elpris">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
   <meta name="description" content="En enkel, reklamefri visning af day-ahead elpriser for DK1, DK2 og SE4.">
   <title>Elpris</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="shell">
+    <aside class="browser-hint card" id="browserHint" hidden>
+      <strong>Gem Elpris på hjemmeskærmen</strong>
+      <span id="browserHintText">Åbn siden i Safari eller Chrome for at installere den.</span>
+      <button type="button" class="text-button" id="dismissBrowserHint">Skjul</button>
+    </aside>
     <header class="topbar">
       <div>
         <p class="eyebrow">Day-ahead spotpris</p>
