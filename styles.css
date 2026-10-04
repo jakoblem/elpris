@@ -549,3 +549,31 @@ dialog form { padding: 18px; }
   font: inherit;
   font-weight: 700;
 }
+
+.postcode-profile {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(110px, 180px);
+  align-items: center;
+  gap: 6px 10px;
+}
+.postcode-profile label {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 750;
+}
+.postcode-profile input {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
+.postcode-profile span {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: .72rem;
+}
