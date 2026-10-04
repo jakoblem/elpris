@@ -525,3 +525,27 @@ dialog form { padding: 18px; }
   white-space: nowrap;
   pointer-events: none;
 }
+
+.quick-grid-profile {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.quick-grid-profile[hidden] { display: none; }
+.quick-grid-profile label {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 750;
+}
+.quick-grid-profile select {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
