@@ -1,12 +1,3 @@
-const state = {
-  area: localStorage.getItem("elpris-area") || "DK2",
-  resolution: localStorage.getItem("elpris-resolution") || "15m",
-  view: localStorage.getItem("elpris-view") || "graph",
-  includeTotal: localStorage.getItem("elpris-total") === "true",
-  data: null,
-  tariff: loadTariff()
-};
-
 const DEFAULT_TARIFF = {
   configured: false,
   national: 12.3,
@@ -15,6 +6,15 @@ const DEFAULT_TARIFF = {
   peak: 0,
   supplier: 0,
   vat: 25
+};
+
+const state = {
+  area: localStorage.getItem("elpris-area") || "DK2",
+  resolution: localStorage.getItem("elpris-resolution") || "15m",
+  view: localStorage.getItem("elpris-view") || "graph",
+  includeTotal: localStorage.getItem("elpris-total") === "true",
+  data: null,
+  tariff: loadTariff()
 };
 
 const els = {
