@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="En enkel, reklamefri visning af day-ahead elpriser for DK1, DK2 og SE4.">
+  <title>Elpris</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Day-ahead spotpris</p>
+        <h1>Elpris</h1>
+      </div>
+      <div class="status" id="status">Henter priser…</div>
+    </header>
+
+    <section class="controls card" aria-label="Visningsvalg">
+      <div class="control-group">
+        <span class="control-label">Område</span>
+        <div class="segmented" id="areaControl">
+          <button type="button" data-area="DK1">DK1</button>
+          <button type="button" data-area="DK2" class="active">DK2</button>
+          <button type="button" data-area="SE4">SE4</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Interval</span>
+        <div class="segmented" id="resolutionControl">
+          <button type="button" data-resolution="15m" class="active">15 min</button>
+          <button type="button" data-resolution="1h">1 time</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Visning</span>
+        <div class="segmented" id="viewControl">
+          <button type="button" data-view="graph" class="active">Graf</button>
+          <button type="button" data-view="table">Tabel</button>
+        </div>
+      </div>
+
+      <div class="price-mode">
+        <label class="check-row">
+          <input type="checkbox" id="totalToggle">
+          <span>Medregn ca. tariffer og transport</span>
+        </label>
+        <button type="button" class="text-button" id="settingsButton">Indstillinger</button>
+      </div>
+      <p class="helper" id="totalHelp">
+        Spotpris vises uden nettarif, elafgift, leverandørtillæg og moms.
+      </p>
+    </section>
+
+    <section class="summary" aria-label="Prisoversigt">
+      <article class="metric card">
+        <span class="metric-label">Laveste</span>
+        <strong id="minPrice">–</strong>
+        <span id="minTime">–</span>
+      </article>
+      <article class="metric card">
+        <span class="metric-label">Gennemsnit</span>
+        <strong id="avgPrice">–</strong>
+        <span id="periodCount">–</span>
+      </article>
+      <article class="metric card">
+        <span class="metric-label">Højeste</span>
+        <strong id="maxPrice">–</strong>
+        <span id="maxTime">–</span>
+      </article>
+    </section>
+
+    <section class="card content-card">
+      <div class="section-head">
+        <div>
+          <h2 id="contentTitle">Kommende 24 timer</h2>
+          <p id="contentSubtitle">Priser i øre/kWh</p>
+        </div>
+        <span class="badge" id="coverageBadge">–</span>
+      </div>
+
+      <div id="graphView">
+        <div class="graph-wrap" id="graphWrap" aria-label="Prisgraf"></div>
+        <div class="legend">
+          <span><i class="dot low"></i> billigst</span>
+          <span><i class="dot high"></i> dyrest</span>
+        </div>
+      </div>
+
+      <div id="tableView" hidden>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Tid</th>
+                <th class="price-column">Pris</th>
+              </tr>
+            </thead>
+            <tbody id="priceTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="empty-state" id="emptyState" hidden>
+        <strong>Ingen priser endnu</strong>
+        <p>Hvis det er før ca. kl. 13, er morgendagens priser muligvis ikke frigivet endnu.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        Kilde:
+        <a href="https://www.energidataservice.dk/" target="_blank" rel="noopener">Energinet · Energi Data Service</a>.
+        Spotpriser fra datasættet DayAheadPrices.
+      </p>
+      <p>
+        1-timesvisning er et gennemsnit af fire 15-minutterspriser. Ca. totalpris er kun et estimat og inkluderer ikke faste abonnementer.
+      </p>
+    </footer>
+  </main>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" id="tariffForm">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">Ca. forbrugerpris</p>
+          <h2>Tarifindstillinger</h2>
+        </div>
+        <button type="button" class="icon-button" id="closeSettings" aria-label="Luk">×</button>
+      </div>
+
+      <p class="dialog-copy">
+        For DK1/DK2 kan du gemme et omtrentligt lokalt nettillæg. Tallene gemmes kun i din browser.
+        Standardværdien for nationale tariffer og elafgift er sat til 2026-niveau.
+      </p>
+
+      <div class="form-grid">
+        <label>
+          Nationale tariffer + elafgift
+          <span class="input-unit"><input id="nationalCharge" inputmode="decimal" type="number" min="0" step="0.1"> øre/kWh</span>
+        </label>
+        <label>
+          Nettarif kl. 00–06
+          <span class="input-unit"><input id="offpeakCharge" inputmode="decimal" type="number" min="0" step="0.1"> øre/kWh</span>
+        </label>
+        <label>
+          Nettarif kl. 06–17 og 21–24
+          <span class="input-unit"><input id="standardCharge" inputmode="decimal" type="number" min="0" step="0.1"> øre/kWh</span>
+        </label>
+        <label>
+          Nettarif kl. 17–21
+          <span class="input-unit"><input id="peakCharge" inputmode="decimal" type="number" min="0" step="0.1"> øre/kWh</span>
+        </label>
+        <label>
+          Elselskabets tillæg
+          <span class="input-unit"><input id="supplierCharge" inputmode="decimal" type="number" min="0" step="0.1"> øre/kWh</span>
+        </label>
+        <label>
+          Moms
+          <span class="input-unit"><input id="vatRate" inputmode="decimal" type="number" min="0" max="100" step="0.1"> %</span>
+        </label>
+      </div>
+
+      <p class="note">
+        Netselskabernes satser varierer efter område og kan også være sæsonafhængige.
+        Disse felter er derfor bevidst redigerbare i første version.
+      </p>
+
+      <div class="dialog-actions">
+        <button type="button" class="secondary-button" id="resetTariffs">Nulstil</button>
+        <button value="save" class="primary-button" id="saveTariffs">Gem</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
