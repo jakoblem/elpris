@@ -152,7 +152,7 @@ function displayedPrice(item) {
       SE4_DEFAULT.energyTaxSekOre
       + SE4_DEFAULT.gridSekOre
       + SE4_DEFAULT.supplierSekOre
-    ) * SE4_DEFAULT.dkkPerSek;
+    ) * Number((state.fx && state.fx.sek_dkk) || SE4_DEFAULT.dkkPerSek);
     const beforeVatSe4 = item.price + swedishChargesDkkOre;
     return beforeVatSe4 * (1 + SE4_DEFAULT.vat / 100);
   }
@@ -405,6 +405,12 @@ function renderGraph(items) {
   svg.setAttribute("viewBox", "0 0 " + width + " " + height);
   svg.setAttribute("role", "img");
   svg.setAttribute("aria-label", "Elpris de kommende 24 timer");
+  svg.style.touchAction = "none";
+
+  const tooltip = document.createElement("div");
+  tooltip.className = "graph-tooltip";
+  tooltip.hidden = true;
+  els.graphWrap.appendChild(tooltip);
 
   for (let i = 0; i < 5; i += 1) {
     const value = yMin + ((yMax - yMin) * i / 4);
@@ -476,6 +482,33 @@ function renderGraph(items) {
     label.setAttribute("transform", "rotate(90 " + x(idx) + " " + (height - pad.bottom + 18) + ")");
     label.textContent = formatClock(items[idx].start);
     svg.appendChild(label);
+  });
+
+  const raw = rawItems();
+  function showQuarterAt(clientX) {
+    if (!raw.length) return;
+    const rect = svg.getBoundingClientRect();
+    const svgX = (clientX - rect.left) / rect.width * width;
+    const ratio = Math.max(0, Math.min(1, (svgX - pad.left) / plotW));
+    const targetTime = items[0].start + ratio * (items[items.length - 1].start - items[0].start);
+    const quarter = raw.reduce(function (best, item) {
+      return Math.abs(item.start - targetTime) < Math.abs(best.start - targetTime) ? item : best;
+    }, raw[0]);
+    const price = displayedPrice(quarter);
+    tooltip.textContent = formatClock(quarter.start) + "–" + formatClock(quarter.end) + " · " + formatPrice(price);
+    tooltip.hidden = false;
+    const px = Math.max(8, Math.min(rect.width - 8, clientX - rect.left));
+    tooltip.style.left = px + "px";
+  }
+
+  svg.addEventListener("pointerdown", function (event) {
+    showQuarterAt(event.clientX);
+  });
+  svg.addEventListener("pointermove", function (event) {
+    if (event.pointerType === "mouse" || event.buttons) showQuarterAt(event.clientX);
+  });
+  svg.addEventListener("pointerleave", function (event) {
+    if (event.pointerType === "mouse") tooltip.hidden = true;
   });
 
   els.graphWrap.appendChild(svg);
@@ -592,6 +625,16 @@ async function loadPrices() {
   els.status.textContent = formatUpdated(state.data.generated_at);
 }
 
+async function loadFx() {
+  try {
+    const response = await fetch("./data/fx.json?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    state.fx = await response.json();
+  } catch (error) {
+    console.warn("Kunne ikke hente valutakurs", error);
+  }
+}
+
 async function loadTariffData() {
   try {
     const response = await fetch("./data/tariffs.json?v=" + Date.now(), { cache: "no-store" });
@@ -611,7 +654,7 @@ async function loadTariffData() {
 
 async function loadData() {
   try {
-    await Promise.all([loadPrices(), loadTariffData()]);
+    await Promise.all([loadPrices(), loadTariffData(), loadFx()]);
     fillTariffForm();
     render();
   } catch (error) {
