@@ -18,62 +18,6 @@
       <div class="status" id="status">Henter priser…</div>
     </header>
 
-    <section class="controls card" aria-label="Visningsvalg">
-      <div class="control-group">
-        <span class="control-label">Område</span>
-        <div class="segmented" id="areaControl">
-          <button type="button" data-area="DK1">DK1</button>
-          <button type="button" data-area="DK2" class="active">DK2</button>
-          <button type="button" data-area="SE4">SE4</button>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <span class="control-label">Interval</span>
-        <div class="segmented" id="resolutionControl">
-          <button type="button" data-resolution="15m" class="active">15 min</button>
-          <button type="button" data-resolution="1h">1 time</button>
-        </div>
-      </div>
-
-      <div class="control-group">
-        <span class="control-label">Visning</span>
-        <div class="segmented" id="viewControl">
-          <button type="button" data-view="graph" class="active">Graf</button>
-          <button type="button" data-view="table">Tabel</button>
-        </div>
-      </div>
-
-      <div class="price-mode">
-        <label class="check-row">
-          <input type="checkbox" id="totalToggle">
-          <span>Medregn ca. tariffer og transport</span>
-        </label>
-        <button type="button" class="text-button" id="settingsButton">Indstillinger</button>
-      </div>
-      <p class="helper" id="totalHelp">
-        Spotpris vises uden nettarif, elafgift, leverandørtillæg og moms.
-      </p>
-    </section>
-
-    <section class="summary" aria-label="Prisoversigt">
-      <article class="metric card">
-        <span class="metric-label">Laveste</span>
-        <strong id="minPrice">–</strong>
-        <span id="minTime">–</span>
-      </article>
-      <article class="metric card">
-        <span class="metric-label">Gennemsnit</span>
-        <strong id="avgPrice">–</strong>
-        <span id="periodCount">–</span>
-      </article>
-      <article class="metric card">
-        <span class="metric-label">Højeste</span>
-        <strong id="maxPrice">–</strong>
-        <span id="maxTime">–</span>
-      </article>
-    </section>
-
     <section class="card content-card">
       <div class="section-head">
         <div>
@@ -111,6 +55,63 @@
       </div>
     </section>
 
+
+    <section class="controls card" aria-label="Visningsvalg">
+      <div class="control-group">
+        <span class="control-label">Område</span>
+        <div class="segmented" id="areaControl">
+          <button type="button" data-area="DK1">DK1</button>
+          <button type="button" data-area="DK2" class="active">DK2</button>
+          <button type="button" data-area="SE4">SE4</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Interval</span>
+        <div class="segmented" id="resolutionControl">
+          <button type="button" data-resolution="15m">15 min</button>
+          <button type="button" data-resolution="1h" class="active">1 time</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <span class="control-label">Visning</span>
+        <div class="segmented" id="viewControl">
+          <button type="button" data-view="graph">Graf</button>
+          <button type="button" data-view="table" class="active">Tabel</button>
+        </div>
+      </div>
+
+      <div class="price-mode">
+        <label class="check-row">
+          <input type="checkbox" id="totalToggle">
+          <span>Medregn ca. tariffer og transport</span>
+        </label>
+        <button type="button" class="text-button" id="settingsButton">Indstillinger</button>
+      </div>
+      <p class="helper" id="totalHelp">
+        Spotpris vises uden nettarif, elafgift, leverandørtillæg og moms.
+      </p>
+    </section>
+
+    <section class="summary" aria-label="Prisoversigt">
+      <article class="metric card">
+        <span class="metric-label">Laveste</span>
+        <strong id="minPrice">–</strong>
+        <span id="minTime">–</span>
+      </article>
+      <article class="metric card">
+        <span class="metric-label">Gennemsnit</span>
+        <strong id="avgPrice">–</strong>
+        <span id="periodCount">–</span>
+      </article>
+      <article class="metric card">
+        <span class="metric-label">Højeste</span>
+        <strong id="maxPrice">–</strong>
+        <span id="maxTime">–</span>
+      </article>
+    </section>
+
     <footer>
       <p>
         Kilde:
@@ -134,9 +135,17 @@
       </div>
 
       <p class="dialog-copy">
-        For DK1/DK2 kan du gemme et omtrentligt lokalt nettillæg. Tallene gemmes kun i din browser.
-        Standardværdien for nationale tariffer og elafgift er sat til 2026-niveau.
+        Vælg netselskab, hvis du kender det. Ellers bruger siden automatisk medianen af de tilgængelige almindelige danske netselskaber.
+        Du kan stadig rette tallene manuelt.
       </p>
+
+      <label class="profile-picker">
+        Netselskab / transport
+        <select id="gridProfile">
+          <option value="median">Standard – median</option>
+          <option value="custom">Tilpasset</option>
+        </select>
+      </label>
 
       <div class="form-grid">
         <label>
@@ -165,9 +174,8 @@
         </label>
       </div>
 
-      <p class="note">
-        Netselskabernes satser varierer efter område og kan også være sæsonafhængige.
-        Disse felter er derfor bevidst redigerbare i første version.
+      <p class="note" id="tariffNote">
+        Transportprisen varierer efter netselskab og klokkeslæt. Siden henter de aktuelle tariffer fra Energinet og bruger medianprofilen som standard.
       </p>
 
       <div class="dialog-actions">

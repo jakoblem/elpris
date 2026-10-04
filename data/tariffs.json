@@ -1,0 +1,14 @@
+{
+  "generated_at": null,
+  "source": "Energinet Energi Data Service / DatahubPricelist",
+  "unit": "ore_per_kwh_ex_vat",
+  "method": "Unweighted hourly median across available selected grid companies",
+  "selected_company_count": 18,
+  "available_company_count": 0,
+  "default_profile": {
+    "id": "median",
+    "name": "Standard – median",
+    "hourly_ex_vat_ore": []
+  },
+  "profiles": []
+}
