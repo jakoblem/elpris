@@ -1,10 +1,17 @@
-name: Opdater elpriser
+name: Opdater elpriser og tariffer
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/fetch_tariffs.py"
+      - ".github/workflows/update-and-deploy.yml"
   schedule:
-    # Bredt UTC-vindue dækker kl. 13 dansk tid ved både sommer- og vintertid.
+    # Prisdata: bredt UTC-vindue dækker kl. 13 dansk tid ved sommer/vintertid.
     - cron: "2-57/5 11-13 * * *"
+    # Tariffer ændres langt sjældnere, men datasættet opdateres dagligt om morgenen.
+    - cron: "17 7 * * *"
 
 permissions:
   contents: write
@@ -26,17 +33,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Hent priser fra Energinet
+      - name: Hent spotpriser fra Energinet
         run: python scripts/fetch_prices.py
 
-      - name: Gem nye priser
+      - name: Hent nettariffer fra Energinet
+        run: python scripts/fetch_tariffs.py
+
+      - name: Gem nye data
         run: |
-          if git diff --quiet -- data/prices.json; then
-            echo "Ingen nye prisdata."
+          if git diff --quiet -- data/prices.json data/tariffs.json; then
+            echo "Ingen nye data."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/prices.json
-            git commit -m "Opdater elpriser"
+            git add data/prices.json data/tariffs.json
+            git commit -m "Opdater elpriser og tariffer"
             git push
           fi
