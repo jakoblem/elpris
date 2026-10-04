@@ -33,19 +33,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Generer PWA PNG-ikoner
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          try:
-              import cairosvg
-          except ImportError:
-              raise SystemExit("cairosvg mangler")
-          svg = Path("icon.svg").read_bytes()
-          for size, name in [(192, "icon-192.png"), (512, "icon-512.png"), (180, "apple-touch-icon.png")]:
-              cairosvg.svg2png(bytestring=svg, write_to=name, output_width=size, output_height=size)
-          PY
-
       - name: Hent spotpriser fra Energinet
         run: python scripts/fetch_prices.py
 
@@ -54,12 +41,12 @@ jobs:
 
       - name: Gem nye data
         run: |
-          if git diff --quiet -- data/prices.json data/tariffs.json data/fx.json icon-192.png icon-512.png apple-touch-icon.png; then
+          if git diff --quiet -- data/prices.json data/tariffs.json data/fx.json; then
             echo "Ingen nye data."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/prices.json data/tariffs.json data/fx.json icon-192.png icon-512.png apple-touch-icon.png
+            git add data/prices.json data/tariffs.json data/fx.json
             git commit -m "Opdater elpriser og tariffer"
             git push
           fi
