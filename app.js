@@ -137,6 +137,20 @@ function localHour(epochMs) {
 function tariffForEpoch(epochMs) {
   const hour = localHour(epochMs);
 
+  if (state.tariff.profileId && state.tariff.profileId !== "custom") {
+    const profile = allGridProfiles().find(function (item) { return item.id === state.tariff.profileId; });
+    if (profile && Array.isArray(profile.periods)) {
+      const match = profile.periods.find(function (period) {
+        const from = Date.parse(period.valid_from);
+        const to = period.valid_to ? Date.parse(period.valid_to) : Infinity;
+        return epochMs >= from && epochMs < to;
+      });
+      if (match && Array.isArray(match.hourly_ex_vat_ore)) {
+        return Number(match.hourly_ex_vat_ore[hour] || 0);
+      }
+    }
+  }
+
   if (Array.isArray(state.tariff.hourly) && state.tariff.hourly.length === 24) {
     return Number(state.tariff.hourly[hour] || 0);
   }
