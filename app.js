@@ -474,12 +474,14 @@ function renderGraph(items) {
   svg.setAttribute("viewBox", "0 0 " + width + " " + height);
   svg.setAttribute("role", "img");
   svg.setAttribute("aria-label", "Elpris de kommende 24 timer");
-  svg.style.touchAction = "none";
+  svg.style.touchAction = "pan-y";
 
   const tooltip = document.createElement("div");
   tooltip.className = "graph-tooltip";
   tooltip.hidden = true;
-  els.graphWrap.appendChild(tooltip);
+  tooltip.setAttribute("role", "status");
+  tooltip.setAttribute("aria-live", "polite");
+  els.graphWrap.parentNode.insertBefore(tooltip, els.graphWrap);
 
   for (let i = 0; i < 5; i += 1) {
     const value = yMin + ((yMax - yMin) * i / 4);
@@ -566,16 +568,30 @@ function renderGraph(items) {
     const price = displayedPrice(quarter);
     tooltip.textContent = formatClock(quarter.start) + "–" + formatClock(quarter.end) + " · " + formatPrice(price);
     tooltip.hidden = false;
-    const px = Math.max(8, Math.min(rect.width - 8, clientX - rect.left));
-    tooltip.style.left = px + "px";
+
   }
 
+  let pointerStart = null;
+
   svg.addEventListener("pointerdown", function (event) {
-    showQuarterAt(event.clientX);
+    pointerStart = { x: event.clientX, y: event.clientY };
   });
+
+  svg.addEventListener("pointerup", function (event) {
+    if (!pointerStart) return;
+    const moved = Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y);
+    if (moved < 12) showQuarterAt(event.clientX);
+    pointerStart = null;
+  });
+
+  svg.addEventListener("pointercancel", function () {
+    pointerStart = null;
+  });
+
   svg.addEventListener("pointermove", function (event) {
-    if (event.pointerType === "mouse" || event.buttons) showQuarterAt(event.clientX);
+    if (event.pointerType === "mouse" && !event.buttons) showQuarterAt(event.clientX);
   });
+
   svg.addEventListener("pointerleave", function (event) {
     if (event.pointerType === "mouse") tooltip.hidden = true;
   });
