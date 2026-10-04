@@ -30,3 +30,13 @@ SE4 viser foreløbig spotpris uden svensk net, skat og moms.
 Workflowet `.github/workflows/update-and-deploy.yml` forsøger at hente nye data hvert femte minut i et tidsvindue omkring den danske day-ahead-publicering. Filen `data/prices.json` ændres kun, når der faktisk er nye prisdata.
 
 Workflowet kan også køres manuelt fra fanen **Actions**.
+
+## GitHub Pages
+
+Aktivér siden én gang under **Settings → Pages**:
+
+- Source: **Deploy from a branch**
+- Branch: **main**
+- Folder: **/(root)**
+
+Derefter publicerer GitHub Pages automatisk nye commits på `main`.
