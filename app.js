@@ -494,8 +494,8 @@ function renderGraph(items) {
   if (!items.length) return;
 
   const width = 920;
-  const height = 330;
-  const pad = { top: 28, right: 22, bottom: 40, left: 54 };
+  const height = 390;
+  const pad = { top: 28, right: 22, bottom: 96, left: 60 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
   const values = items.map(displayedPrice);
