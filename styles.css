@@ -665,3 +665,32 @@ tr.charge-window td:first-child {
   line-height: 1.45;
 }
 .install-help .primary-button { min-height: 42px; }
+
+.quick-supplier-profile {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 5px 10px;
+}
+.quick-supplier-profile[hidden] { display: none; }
+.quick-supplier-profile label {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 750;
+}
+.quick-supplier-profile select {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+}
+.quick-supplier-profile span {
+  grid-column: 2;
+  color: var(--muted);
+  font-size: .72rem;
+}
