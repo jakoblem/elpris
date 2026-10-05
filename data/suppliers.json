@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-10-05",
+  "unit": "ore_per_kwh_incl_vat",
+  "method": "Unweighted median of selected common variable/spot-based supplier products",
+  "default_profile": {
+    "id": "median",
+    "name": "Standard (median)",
+    "markup_ore": 9.7,
+    "monthly_subscription_dkk": null
+  },
+  "profiles": [
+    {
+      "id": "andel-flex",
+      "name": "Andel Energi – FlexEnergi",
+      "markup_ore": 14.63,
+      "monthly_subscription_dkk": 20,
+      "valid_from": "2026-07-01",
+      "source_note": "Tillæg for nye kunder; opdateres 1/1 og 1/7"
+    },
+    {
+      "id": "norlys-flex",
+      "name": "Norlys – FlexEl",
+      "markup_ore": 9.7,
+      "monthly_subscription_dkk": null,
+      "valid_from": "2026-07-01",
+      "valid_to": "2027-01-01",
+      "source_note": "Handelsomkostninger + administrationstillæg"
+    },
+    {
+      "id": "modstroem-nemel",
+      "name": "Modstrøm – nemEL",
+      "markup_ore": 5,
+      "monthly_subscription_dkk": 10,
+      "source_note": "Spotbaseret produkt"
+    },
+    {
+      "id": "modstroem-enkel",
+      "name": "Modstrøm – EnkEL",
+      "markup_ore": 10,
+      "monthly_subscription_dkk": 10,
+      "source_note": "Spotbaseret produkt"
+    }
+  ]
+}

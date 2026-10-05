@@ -27,6 +27,8 @@ const state = {
   includeTotal: storedTotal === null ? true : storedTotal === "true",
   data: null,
   tariffData: null,
+  supplierData: null,
+  supplierId: localStorage.getItem("elpris-supplier") || "median",
   tariff: loadTariff()
 };
 
@@ -44,6 +46,9 @@ const els = {
   settingsButton: document.getElementById("settingsButton"),
   totalHelp: document.getElementById("totalHelp"),
   quickGridProfile: document.getElementById("quickGridProfile"),
+  quickSupplierProfile: document.getElementById("quickSupplierProfile"),
+  quickSupplierSelect: document.getElementById("quickSupplierSelect"),
+  supplierHint: document.getElementById("supplierHint"),
   quickGridSelect: document.getElementById("quickGridSelect"),
   postcodeWrap: document.getElementById("postcodeWrap"),
   postcodeInput: document.getElementById("postcodeInput"),
@@ -208,6 +213,34 @@ function tariffForEpoch(epochMs) {
   return state.tariff.standard;
 }
 
+function supplierProfile() {
+  if (!state.supplierData) return null;
+  if (state.supplierId === "median") return state.supplierData.default_profile;
+  return (state.supplierData.profiles || []).find(function (profile) { return profile.id === state.supplierId; })
+    || state.supplierData.default_profile;
+}
+
+function supplierMarkup() {
+  const profile = supplierProfile();
+  return profile ? Number(profile.markup_ore || 0) : 0;
+}
+
+function populateSupplierProfiles() {
+  if (!state.supplierData) return;
+  els.quickSupplierSelect.innerHTML = "";
+  [state.supplierData.default_profile].concat(state.supplierData.profiles || []).forEach(function (profile) {
+    const option = document.createElement("option");
+    option.value = profile.id;
+    option.textContent = profile.name;
+    els.quickSupplierSelect.appendChild(option);
+  });
+  els.quickSupplierSelect.value = state.supplierId;
+  const profile = supplierProfile();
+  els.supplierHint.textContent = profile && profile.monthly_subscription_dkk != null
+    ? "Tillæg " + Math.round(profile.markup_ore) + " øre/kWh · abonnement " + profile.monthly_subscription_dkk + " kr./md. (ikke medregnet)"
+    : "Tillæg " + Math.round((profile && profile.markup_ore) || 0) + " øre/kWh · fast abonnement ikke medregnet";
+}
+
 function displayedPrice(item) {
   if (!state.includeTotal) return item.price;
   if (state.area === "SE4") {
@@ -216,12 +249,13 @@ function displayedPrice(item) {
       + SE4_DEFAULT.gridSekOre
       + SE4_DEFAULT.supplierSekOre
     ) * Number((state.fx && state.fx.sek_dkk) || SE4_DEFAULT.dkkPerSek);
-    const beforeVatSe4 = item.price + swedishChargesDkkOre;
+    const beforeVatSe4 = item.price + swedishChargesDkkOre + supplierMarkup();
     return beforeVatSe4 * (1 + SE4_DEFAULT.vat / 100);
   }
   const beforeVat = item.price
     + Number(state.tariff.national || 0)
     + Number(tariffForEpoch(item.start) || 0)
+    + supplierMarkup()
     + Number(state.tariff.supplier || 0);
   return beforeVat * (1 + Number(state.tariff.vat || 0) / 100);
 }
@@ -361,6 +395,7 @@ function openSettings() {
 function updateTotalUi() {
   const isSe4 = state.area === "SE4";
   els.quickGridProfile.hidden = isSe4 || !state.includeTotal;
+  els.quickSupplierProfile.hidden = !state.includeTotal;
   els.totalToggle.disabled = false;
   els.settingsButton.disabled = isSe4;
   els.totalToggle.checked = state.includeTotal;
@@ -716,6 +751,13 @@ els.postcodeInput.addEventListener("change", function () {
   updatePostcodeUi();
 });
 
+els.quickSupplierSelect.addEventListener("change", function () {
+  state.supplierId = els.quickSupplierSelect.value;
+  localStorage.setItem("elpris-supplier", state.supplierId);
+  populateSupplierProfiles();
+  render();
+});
+
 els.quickGridSelect.addEventListener("change", function () {
   applyGridProfile(els.quickGridSelect.value);
   saveTariff(state.tariff);
@@ -781,6 +823,17 @@ async function loadFx() {
   }
 }
 
+async function loadSupplierData() {
+  try {
+    const response = await fetch("./data/suppliers.json?v=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    state.supplierData = await response.json();
+    populateSupplierProfiles();
+  } catch (error) {
+    console.warn("Kunne ikke hente elselskabsprofiler", error);
+  }
+}
+
 async function loadTariffData() {
   try {
     const response = await fetch("./data/tariffs.json?v=" + Date.now(), { cache: "no-store" });
@@ -800,7 +853,7 @@ async function loadTariffData() {
 
 async function loadData() {
   try {
-    await Promise.all([loadPrices(), loadTariffData(), loadFx()]);
+    await Promise.all([loadPrices(), loadTariffData(), loadFx(), loadSupplierData()]);
     fillTariffForm();
     render();
   } catch (error) {
