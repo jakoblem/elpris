@@ -698,7 +698,14 @@ function render() {
     : "Spotpris · øre/kWh";
 
   if (state.data && state.data.coverage) {
-    const complete = state.data.coverage.tomorrow_complete;
+    const tomorrow = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Copenhagen",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }).format(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    const coverageDate = state.data.coverage.tomorrow_date;
+    const complete = state.data.coverage.tomorrow_complete && coverageDate === tomorrow;
     els.coverageBadge.textContent = complete ? "I morgen klar" : "Afventer i morgen";
   } else {
     els.coverageBadge.textContent = "–";
