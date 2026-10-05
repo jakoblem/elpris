@@ -403,7 +403,7 @@ function openSettings() {
 function updateTotalUi() {
   const isSe4 = state.area === "SE4";
   els.quickGridProfile.hidden = isSe4 || !state.includeTotal;
-  els.quickSupplierProfile.hidden = !state.includeTotal;
+  els.quickSupplierProfile.hidden = isSe4 || !state.includeTotal;
   els.totalToggle.disabled = false;
   els.settingsButton.disabled = isSe4;
   els.totalToggle.checked = state.includeTotal;
