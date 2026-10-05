@@ -115,8 +115,8 @@ function updatePostcodeUi() {
   els.postcodeInput.value = loadAreaPostcode(state.area);
   els.postcodeInput.placeholder = state.area === "SE4" ? "fx 211 20" : "fx 2100";
   els.postcodeHint.textContent = state.area === "SE4"
-    ? "Gemmes kun i denne browser for SE4."
-    : "Gemmes kun i denne browser for " + state.area + ". Netselskabet kan altid vælges manuelt.";
+    ? "Gemmes på denne enhed for SE4."
+    : "Gemmes på denne enhed for " + state.area + ". Netselskabet kan altid vælges manuelt.";
 }
 
 function suggestGridFromPostcode() {
