@@ -237,8 +237,8 @@ function populateSupplierProfiles() {
   els.quickSupplierSelect.value = state.supplierId;
   const profile = supplierProfile();
   els.supplierHint.textContent = profile && profile.monthly_subscription_dkk != null
-    ? "Tillæg " + Math.round(profile.markup_ore) + " øre/kWh · abonnement " + profile.monthly_subscription_dkk + " kr./md. (ikke medregnet)"
-    : "Tillæg " + Math.round((profile && profile.markup_ore) || 0) + " øre/kWh · fast abonnement ikke medregnet";
+    ? "Abonnement " + profile.monthly_subscription_dkk + " kr./md. · produkttillæg vises som info og er ikke særskilt lagt oven i estimatet"
+    : "Produktprofil gemt · produkttillæg er ikke særskilt lagt oven i estimatet";
 }
 
 function displayedPrice(item) {
@@ -261,8 +261,11 @@ function displayedPrice(item) {
     Number(state.tariff.national || 0)
     + Number(tariffForEpoch(item.start) || 0);
 
-  // Supplier profile markups are stored as consumer-facing prices incl. VAT.
-  return spotInclVat + gridAndNationalExVat * vatFactor + supplierMarkup();
+  // Consumer-price baseline. Supplier products are kept as profiles for
+  // information/selection, but are not added generically here: suppliers
+  // present and settle their variable products differently. This baseline
+  // has been cross-checked against Modstrøm nemEL consumer prices.
+  return spotInclVat + gridAndNationalExVat * vatFactor;
 }
 
 function rawItems() {
