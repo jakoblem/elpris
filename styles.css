@@ -581,9 +581,12 @@ dialog form { padding: 18px; }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
-  .graph-wrap,
+  .graph-wrap {
+    min-height: 300px;
+  }
   .graph-wrap svg {
-    min-height: 230px;
+    min-height: 300px;
+    height: auto;
   }
 }
 
