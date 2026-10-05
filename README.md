@@ -141,3 +141,7 @@ Den præcise slutpris kan bl.a. afhænge af:
 - ændringer i skatter, afgifter og tariffer
 
 Brug derfor totalprisen som et praktisk estimat til fx planlægning af elbilopladning og andet fleksibelt forbrug.
+
+## Publicering
+
+GitHub Pages publicerer automatisk ændringer fra `main`. Prisdata opdateres separat af GitHub Actions.
