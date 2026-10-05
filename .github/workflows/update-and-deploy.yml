@@ -12,6 +12,8 @@ on:
     - cron: "2-57/5 11-13 * * *"
     # Tariffer ændres langt sjældnere, men datasættet opdateres dagligt om morgenen.
     - cron: "17 7 * * *"
+    # Fallback efter day-ahead-vinduet, hvis GitHub har forsinket/misset 5-minutterskørsler.
+    - cron: "20 14 * * *"
 
 permissions:
   contents: write
