@@ -242,22 +242,27 @@ function populateSupplierProfiles() {
 }
 
 function displayedPrice(item) {
-  if (!state.includeTotal) return item.price;
+  const vatRate = state.area === "SE4" ? SE4_DEFAULT.vat : Number(state.tariff.vat || 25);
+  const vatFactor = 1 + vatRate / 100;
+  const spotInclVat = item.price * vatFactor;
+
+  if (!state.includeTotal) return spotInclVat;
+
   if (state.area === "SE4") {
-    const swedishChargesDkkOre = (
+    const swedishChargesExVatDkkOre = (
       SE4_DEFAULT.energyTaxSekOre
       + SE4_DEFAULT.gridSekOre
       + SE4_DEFAULT.supplierSekOre
     ) * Number((state.fx && state.fx.sek_dkk) || SE4_DEFAULT.dkkPerSek);
-    const beforeVatSe4 = item.price + swedishChargesDkkOre + supplierMarkup();
-    return beforeVatSe4 * (1 + SE4_DEFAULT.vat / 100);
+    return spotInclVat + swedishChargesExVatDkkOre * vatFactor;
   }
-  const beforeVat = item.price
-    + Number(state.tariff.national || 0)
-    + Number(tariffForEpoch(item.start) || 0)
-    + supplierMarkup()
-    + Number(state.tariff.supplier || 0);
-  return beforeVat * (1 + Number(state.tariff.vat || 0) / 100);
+
+  const gridAndNationalExVat =
+    Number(state.tariff.national || 0)
+    + Number(tariffForEpoch(item.start) || 0);
+
+  // Supplier profile markups are stored as consumer-facing prices incl. VAT.
+  return spotInclVat + gridAndNationalExVat * vatFactor + supplierMarkup();
 }
 
 function rawItems() {
@@ -403,14 +408,14 @@ function updateTotalUi() {
   if (isSe4) {
     els.totalHelp.textContent = state.includeTotal
       ? "Ca. SE4-forbrugerpris inkl. svenske afgifter, net og moms."
-      : "SE4 spotpris uden svensk energiskat, net, leverandørtillæg og moms.";
+      : "SE4 spotpris inkl. moms, men uden svensk energiskat, net og leverandørtillæg.";
     return;
   }
   if (state.includeTotal) {
     const profileName = (allGridProfiles().find(function (p) { return p.id === state.tariff.profileId; }) || {}).name;
     els.totalHelp.textContent = "Ca. totalpris: spot + " + (profileName || "transport") + " + nationale tariffer/elafgift + moms. Faste abonnementer er ikke medregnet.";
   } else {
-    els.totalHelp.textContent = "Spotpris vises uden nettarif, elafgift, leverandørtillæg og moms.";
+    els.totalHelp.textContent = "Spotpris vises inkl. moms, men uden nettarif, elafgift og leverandørtillæg.";
   }
 }
 
@@ -695,7 +700,7 @@ function render() {
 
   els.contentSubtitle.textContent = state.includeTotal
     ? "Ca. pris inkl. valgte tillæg og moms · øre/kWh"
-    : "Spotpris · øre/kWh";
+    : "Spotpris inkl. moms · øre/kWh";
 
   if (state.data && state.data.coverage) {
     const tomorrow = new Intl.DateTimeFormat("en-CA", {
