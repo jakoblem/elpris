@@ -14,6 +14,7 @@ on:
     - cron: "17 7 * * *"
     # Fallback efter day-ahead-vinduet, hvis GitHub har forsinket/misset 5-minutterskørsler.
     - cron: "20 14 * * *"
+    - cron: "17 * * * *"
 
 permissions:
   contents: write
@@ -40,6 +41,7 @@ jobs:
 
       - name: Hent nettariffer fra Energinet
         run: python scripts/fetch_tariffs.py
+        continue-on-error: true
 
       - name: Gem nye data
         run: |
