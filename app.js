@@ -272,7 +272,22 @@ function rawItems() {
   if (!state.data || !state.data.areas || !state.data.areas[state.area]) return [];
 
   const now = Date.now();
-  const horizon = now + 24 * 60 * 60 * 1000;
+  // Include all remaining periods today and all of tomorrow, up to local midnight.
+  // Compare Copenhagen calendar dates so daylight-saving transitions work too.
+  const dateFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit"
+  });
+  function localDateKey(timestamp) {
+    const parts = Object.fromEntries(dateFormatter.formatToParts(new Date(timestamp))
+      .filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+    return parts.year + "-" + parts.month + "-" + parts.day;
+  }
+  const todayKey = localDateKey(now);
+  const tomorrowDate = new Date(Date.UTC(
+    Number(todayKey.slice(0, 4)), Number(todayKey.slice(5, 7)) - 1,
+    Number(todayKey.slice(8, 10)) + 1
+  ));
+  const tomorrowKey = tomorrowDate.toISOString().slice(0, 10);
 
   return state.data.areas[state.area]
     .map(function (row) {
@@ -285,7 +300,7 @@ function rawItems() {
       };
     })
     .filter(function (item) {
-      return item.end > now && item.start < horizon && Number.isFinite(item.price);
+      return item.end > now && localDateKey(item.start) <= tomorrowKey && Number.isFinite(item.price);
     })
     .sort(function (a, b) { return a.start - b.start; });
 }
