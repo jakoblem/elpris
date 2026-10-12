@@ -1,156 +1,189 @@
 #!/usr/bin/env python3
-"""Fetch day-ahead prices from Energinet and write a compact JSON file for the site."""
-
+"""Fetch validated local calendar days without losing previously complete days."""
 from __future__ import annotations
 
+import argparse
 import json
-import sys
+import math
+import time
 import urllib.parse
-import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from data_utils import diagnostic, read_json, request_bytes, run, summary, write_json
+
 API = "https://api.energidataservice.dk/dataset/DayAheadPrices"
 AREAS = ("DK1", "DK2", "SE4")
 COPENHAGEN = ZoneInfo("Europe/Copenhagen")
 OUT = Path(__file__).resolve().parents[1] / "data" / "prices.json"
-
 TIME_KEYS = ("TimeUTC", "HourUTC", "Minutes5UTC", "Minutes15UTC")
 PRICE_KEYS = ("DayAheadPriceDKK", "SpotPriceDKK", "PriceDKK")
-AREA_KEYS = ("PriceArea",)
 
 
 def first(record, keys):
     for key in keys:
-        if key in record and record[key] not in (None, ""):
+        if record.get(key) not in (None, ""):
             return record[key]
-    raise KeyError(f"None of {keys} found in record keys: {sorted(record)}")
+    raise ValueError(f"Missing {keys} in price record")
 
 
-def parse_utc(value: str) -> datetime:
-    value = str(value).strip()
-    if value.endswith("Z"):
-        value = value[:-1] + "+00:00"
-    dt = datetime.fromisoformat(value)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+def parse_utc(value):
+    dt = datetime.fromisoformat(str(value).strip().replace("Z", "+00:00"))
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
 
 
-def expected_quarters(local_date) -> int:
-    start = datetime.combine(local_date, datetime.min.time(), tzinfo=COPENHAGEN)
-    end = datetime.combine(local_date + timedelta(days=1), datetime.min.time(), tzinfo=COPENHAGEN)
-    return int((end.astimezone(timezone.utc) - start.astimezone(timezone.utc)).total_seconds() // 900)
+def day_slots(day):
+    start = datetime.combine(day, datetime.min.time(), COPENHAGEN).astimezone(timezone.utc)
+    end = datetime.combine(day + timedelta(days=1), datetime.min.time(), COPENHAGEN).astimezone(timezone.utc)
+    return {start + timedelta(minutes=15 * index) for index in range(int((end - start).total_seconds() // 900))}
 
 
-def fetch_records() -> list[dict]:
-    now_local = datetime.now(COPENHAGEN)
-    start = (now_local.date() - timedelta(days=1)).isoformat()
-    end = (now_local.date() + timedelta(days=2)).isoformat()
+def expected_quarters(day):
+    return len(day_slots(day))
 
+
+def fetch_records(now=None):
+    now = now or datetime.now(COPENHAGEN)
+    # EDS start/end are Danish local dates; end is exclusive, including on DST days.
     params = {
-        "start": start,
-        "end": end,
+        "start": (now.date() - timedelta(days=1)).isoformat(),
+        "end": (now.date() + timedelta(days=2)).isoformat(),
         "filter": json.dumps({"PriceArea": list(AREAS)}, separators=(",", ":")),
         "limit": "10000",
     }
-    url = API + "?" + urllib.parse.urlencode(params)
-
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "elpris-github-pages/1.0",
-            "Accept": "application/json",
-        },
-    )
-    with urllib.request.urlopen(req, timeout=30) as response:
-        payload = json.load(response)
-
+    payload = json.loads(request_bytes(API + "?" + urllib.parse.urlencode(params)))
     records = payload.get("records")
-    if not isinstance(records, list):
-        raise RuntimeError("Energinet API response did not contain a records array")
+    if not isinstance(records, list) or not records:
+        raise ValueError("Energinet returned missing/empty records")
+    if int(payload.get("total", len(records))) > len(records):
+        raise ValueError("Energinet response is truncated; refusing incomplete data")
     return records
 
 
-def build_payload(records: list[dict]) -> dict:
-    areas: dict[str, list[dict]] = {area: [] for area in AREAS}
-
-    for record in records:
-        try:
-            area = str(first(record, AREA_KEYS))
-            if area not in areas:
-                continue
-            dt_utc = parse_utc(first(record, TIME_KEYS))
-            dkk_mwh = float(first(record, PRICE_KEYS))
-        except (KeyError, TypeError, ValueError) as exc:
-            print(f"Skipping unexpected record: {exc}", file=sys.stderr)
-            continue
-
-        areas[area].append(
-            {
-                "time_utc": dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "price_ore_kwh": round(dkk_mwh / 10.0, 4),
-            }
-        )
-
-    for rows in areas.values():
-        rows.sort(key=lambda row: row["time_utc"])
-
-    now_local = datetime.now(COPENHAGEN)
-    tomorrow = now_local.date() + timedelta(days=1)
-    expected = expected_quarters(tomorrow)
-
-    tomorrow_counts = {}
-    for area, rows in areas.items():
-        count = 0
+def group_rows(areas):
+    groups = defaultdict(list)
+    for area in AREAS:
+        rows = areas.get(area, [])
+        if not isinstance(rows, list):
+            raise ValueError(f"{area}: expected an interval array")
         for row in rows:
-            local = parse_utc(row["time_utc"]).astimezone(COPENHAGEN)
-            if local.date() == tomorrow:
-                count += 1
-        tomorrow_counts[area] = count
+            stamp = parse_utc(row["time_utc"])
+            value = row["price_ore_kwh"]
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+                raise ValueError(f"{area}: invalid price at {stamp}")
+            if stamp.minute % 15 or stamp.second or stamp.microsecond:
+                raise ValueError(f"{area}: timestamp is not on the quarter-hour grid: {stamp}")
+            groups[area, stamp.astimezone(COPENHAGEN).date()].append(row)
+    return groups
 
+
+def complete(rows, day):
+    stamps = [parse_utc(row["time_utc"]) for row in rows]
+    return len(stamps) == len(set(stamps)) and set(stamps) == day_slots(day)
+
+
+def build_payload(records, existing=None, now=None):
+    now = now or datetime.now(COPENHAGEN)
+    areas = {area: [] for area in AREAS}
+    seen = set()
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("Non-object price record")
+        area = str(first(record, ("PriceArea",)))
+        if area not in areas:
+            raise ValueError(f"Unexpected price area {area}")
+        stamp = parse_utc(first(record, TIME_KEYS))
+        raw = first(record, PRICE_KEYS)
+        price = float(raw)
+        if isinstance(raw, bool) or not math.isfinite(price):
+            raise ValueError(f"{area}: non-finite/invalid price at {stamp}")
+        if (area, stamp) in seen:
+            raise ValueError(f"{area}: duplicate interval at {stamp}")
+        seen.add((area, stamp))
+        areas[area].append({"time_utc": stamp.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                            "price_ore_kwh": round(price / 10, 4)})
+        # Validate original timestamp before formatting can drop sub-seconds.
+        if stamp.minute % 15 or stamp.second or stamp.microsecond:
+            raise ValueError(f"{area}: off-grid interval at {stamp}")
+    incoming = group_rows(areas)
+    try:
+        cached = group_rows(existing.get("areas", {})) if isinstance(existing, dict) else {}
+    except (ValueError, KeyError, TypeError, AttributeError) as exc:
+        diagnostic("warning", f"Cached price data failed validation: {exc}")
+        cached = {}
+    today = now.date()
+    tomorrow = today + timedelta(days=1)
+    merged = {area: [] for area in AREAS}
+    for area in AREAS:
+        for day in (today - timedelta(days=1), today, tomorrow):
+            fresh = incoming.get((area, day), [])
+            previous = cached.get((area, day), [])
+            if complete(fresh, day):
+                merged[area].extend(fresh)
+            elif complete(previous, day):
+                diagnostic("warning", f"{area} {day}: source has {len(fresh)}/{expected_quarters(day)}; retaining complete cached day")
+                merged[area].extend(previous)
+            elif fresh:
+                diagnostic("warning", f"{area} {day}: rejecting incomplete day ({len(fresh)}/{expected_quarters(day)})")
+        merged[area].sort(key=lambda row: row["time_utc"])
+    counts = {}
+    for day in (today, tomorrow):
+        counts[day] = {area: sum(parse_utc(row["time_utc"]).astimezone(COPENHAGEN).date() == day
+                                 for row in rows) for area, rows in merged.items()}
     return {
-        "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
-        "source": "Energinet Energi Data Service / DayAheadPrices",
-        "unit": "ore_per_kwh",
-        "areas": areas,
+        "generated_at": now.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "source": "Energinet Energi Data Service / DayAheadPrices", "unit": "ore_per_kwh", "areas": merged,
         "coverage": {
-            "tomorrow_date": tomorrow.isoformat(),
-            "tomorrow_expected_intervals": expected,
-            "tomorrow_counts": tomorrow_counts,
-            "tomorrow_complete": all(tomorrow_counts.get(area, 0) >= expected for area in AREAS),
+            "today_date": today.isoformat(), "today_expected_intervals": expected_quarters(today),
+            "today_counts": counts[today],
+            "today_complete": all(count == expected_quarters(today) for count in counts[today].values()),
+            "tomorrow_date": tomorrow.isoformat(), "tomorrow_expected_intervals": expected_quarters(tomorrow),
+            "tomorrow_counts": counts[tomorrow],
+            "tomorrow_complete": all(count == expected_quarters(tomorrow) for count in counts[tomorrow].values()),
         },
     }
 
 
-def normalized_without_timestamp(payload: dict) -> dict:
-    clone = dict(payload)
-    clone.pop("generated_at", None)
-    return clone
-
-
-def main() -> int:
-    records = fetch_records()
-    payload = build_payload(records)
-
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-
-    if OUT.exists():
+def update(attempts=1, poll_seconds=60, now=None):
+    now = now or datetime.now(COPENHAGEN)
+    payload = None
+    cached = read_json(OUT)
+    # Poll only during/after publication, avoiding retries every night for unpublished data.
+    attempts = attempts if now.hour >= 13 else 1
+    for attempt in range(attempts):
         try:
-            existing = json.loads(OUT.read_text(encoding="utf-8"))
-            if normalized_without_timestamp(existing) == normalized_without_timestamp(payload):
-                print("No new price data; leaving prices.json unchanged.")
-                return 0
-        except (json.JSONDecodeError, OSError):
-            pass
-
-    OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    counts = {area: len(rows) for area, rows in payload["areas"].items()}
-    print(f"Wrote {OUT}: {counts}; tomorrow_complete={payload['coverage']['tomorrow_complete']}")
+            payload = build_payload(fetch_records(now), payload or cached, now)
+            if payload["coverage"]["today_complete"] and payload["coverage"]["tomorrow_complete"]:
+                break
+        except Exception as exc:
+            diagnostic("warning", f"Price attempt {attempt + 1}/{attempts} failed: {exc}")
+        if attempt < attempts - 1:
+            time.sleep(poll_seconds)
+    if payload is None:
+        raise RuntimeError("All price requests failed validation or transport")
+    coverage = payload["coverage"]
+    summary(f"Spot prices: {coverage['tomorrow_date']} — {coverage['tomorrow_counts']} / {coverage['tomorrow_expected_intervals']} per area; today_complete={coverage['today_complete']}; tomorrow_complete={coverage['tomorrow_complete']}")
+    if not coverage["today_complete"]:
+        raise RuntimeError(f"Today's prices missing: {coverage['today_counts']}; refusing to replace prices.json")
+    write_json(OUT, payload)
+    if not coverage["tomorrow_complete"]:
+        message = f"Tomorrow {coverage['tomorrow_date']} incomplete: {coverage['tomorrow_counts']}; expected {coverage['tomorrow_expected_intervals']} per area"
+        if now.hour >= 15:
+            diagnostic("error", message + "; publication deadline 15:00 Europe/Copenhagen exceeded")
+            return 1
+        diagnostic("warning", message + "; awaiting publication (deadline 15:00 Europe/Copenhagen)")
     return 0
 
 
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--attempts", type=int, choices=range(1, 6), default=1)
+    parser.add_argument("--poll-seconds", type=int, choices=range(1, 301), default=60)
+    args = parser.parse_args()
+    return update(args.attempts, args.poll_seconds)
+
+
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run(main))

@@ -1,45 +1,55 @@
 #!/usr/bin/env python3
-"""Fetch latest published SEK/DKK indicative reference rate from Danmarks Nationalbank."""
-import json, re, urllib.request
-from datetime import datetime, timezone
+"""Fetch Nationalbank's documented XML reference rate (DKK per 100 SEK)."""
+import math
+import xml.etree.ElementTree as ET
+from datetime import date, datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
-URL="https://www.nationalbanken.dk/da/vores-arbejde/stabile-priser-pengepolitik-og-dansk-oekonomi/valutakurser"
-OUT=Path(__file__).resolve().parents[1]/"data"/"fx.json"
+from data_utils import read_json, request_bytes, run, summary, write_json
+
+URL = "https://www.nationalbanken.dk/api/currencyratesxml?lang=da"
+OUT = Path(__file__).resolve().parents[1] / "data" / "fx.json"
+COPENHAGEN = ZoneInfo("Europe/Copenhagen")
+
+
+def build_payload(content, now=None):
+    now = now or datetime.now(COPENHAGEN)
+    root = ET.fromstring(content)
+    if root.tag != "exchangerates" or root.get("refcur") != "DKK" or root.get("refamt") != "1":
+        raise ValueError("Unexpected Nationalbank XML schema/reference currency")
+    candidates = []
+    for daily in root.findall("dailyrates"):
+        rate_date = date.fromisoformat(daily.attrib["id"])
+        currencies = daily.findall("currency[@code='SEK']")
+        if len(currencies) != 1:
+            raise ValueError(f"{rate_date}: expected exactly one SEK rate")
+        rate100 = float(currencies[0].attrib["rate"].replace(",", "."))
+        if not math.isfinite(rate100) or not 40 < rate100 < 100:
+            raise ValueError(f"Implausible SEK rate per 100 units: {rate100}")
+        candidates.append((rate_date, rate100))
+    if not candidates:
+        raise ValueError("No dated SEK rate in Nationalbank XML")
+    rate_date, rate100 = max(candidates)
+    age = (now.date() - rate_date).days
+    if not 0 <= age <= 7:
+        raise ValueError(f"SEK reference date {rate_date} is future-dated or more than 7 days old")
+    return {
+        "generated_at": now.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "source": "Danmarks Nationalbank", "source_url": URL, "rate_date": rate_date.isoformat(),
+        "sek_dkk": round(rate100 / 100, 6), "quoted_as": "DKK per SEK", "indicative": True,
+    }
+
 
 def main():
-    req=urllib.request.Request(URL,headers={"User-Agent":"elpris-github-pages/1.0","Accept-Language":"da"})
-    with urllib.request.urlopen(req,timeout=30) as response:
-        html=response.read().decode("utf-8","replace")
-    # Page renders a table row containing Svenske kroner, SEK and a DKK price per 100 SEK.
-    patterns=[
-        r"Svenske kroner.{0,1000}?SEK.{0,1000}?([0-9]{2}[,.][0-9]{2,4})",
-        r"Swedish kronor.{0,1000}?SEK.{0,1000}?([0-9]{2}[,.][0-9]{2,4})",
-    ]
-    rate100=None
-    for pattern in patterns:
-        m=re.search(pattern,html,re.I|re.S)
-        if m:
-            rate100=float(m.group(1).replace(",","."))
-            break
-    if rate100 is None or not (40 < rate100 < 100):
-        raise RuntimeError("Could not extract SEK reference rate from Nationalbanken")
-    payload={
-      "generated_at":datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00","Z"),
-      "source":"Danmarks Nationalbank",
-      "sek_dkk":round(rate100/100,6),
-      "quoted_as":"DKK per SEK",
-      "indicative":True
-    }
-    OUT.parent.mkdir(parents=True,exist_ok=True)
-    if OUT.exists():
-        try:
-            old=json.loads(OUT.read_text(encoding="utf-8"))
-            if old.get("sek_dkk")==payload["sek_dkk"]:
-                print("FX unchanged")
-                return
-        except Exception:
-            pass
-    OUT.write_text(json.dumps(payload,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    print("SEK/DKK",payload["sek_dkk"])
-if __name__=="__main__": main()
+    payload = build_payload(request_bytes(URL))
+    old = read_json(OUT)
+    if isinstance(old, dict) and old.get("rate_date") and old["rate_date"] > payload["rate_date"]:
+        raise ValueError(f"Source rate date regressed from {old['rate_date']} to {payload['rate_date']}")
+    changed = write_json(OUT, payload)
+    summary(f"SEK/DKK: {payload['sek_dkk']} (reference date {payload['rate_date']}; {'updated' if changed else 'unchanged'})")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(run(main))

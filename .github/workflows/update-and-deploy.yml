@@ -1,23 +1,22 @@
-name: Opdater elpriser og tariffer
+name: Opdater elpriser, tariffer og valuta
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - "scripts/fetch_tariffs.py"
+      - "scripts/**"
+      - "tests/**"
       - ".github/workflows/update-and-deploy.yml"
   schedule:
-    # Prisdata: bredt UTC-vindue dækker kl. 13 dansk tid ved sommer/vintertid.
-    - cron: "2-57/5 11-13 * * *"
-    # Tariffer ændres langt sjældnere, men datasættet opdateres dagligt om morgenen.
-    - cron: "17 7 * * *"
-    # Fallback efter day-ahead-vinduet, hvis GitHub har forsinket/misset 5-minutterskørsler.
-    - cron: "20 14 * * *"
-    - cron: "17 * * * *"
+    # UTC: dækker offentliggørelse samt forsinkede priser ved både sommer- og vintertid.
+    - cron: "2-57/5 11-17 * * *"
+    # Indhent også udeblevne kørsler uden for publiceringsvinduet og ved datoskift.
+    - cron: "23 0-10,18-23 * * *"
 
 permissions:
   contents: write
+  pages: write
 
 concurrency:
   group: "elpris-update"
@@ -25,32 +24,87 @@ concurrency:
 
 jobs:
   update:
+    # Manuel kørsel på en feature-branch må ikke skrive eller publicere main.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
-      - name: Hent repository
+      - name: Hent seneste main
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
 
       - name: Sæt Python op
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Hent spotpriser fra Energinet
-        run: python scripts/fetch_prices.py
+      - name: Test databehandling
+        id: tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Registrer udløser og faktisk starttid
+        env:
+          TRIGGER: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          echo "Trigger: $TRIGGER; cron: ${SCHEDULE:-ikke planlagt}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Start (UTC): $(date -u +%FT%TZ); checkout: $(git rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Hent og kontroller spotpriser
+        id: prices
+        run: python scripts/fetch_prices.py --attempts 3 --poll-seconds 60
+        continue-on-error: true
+
+      - name: Hent SEK/DKK fra Nationalbankens XML-feed
+        id: fx
+        run: python scripts/fetch_fx.py
+        continue-on-error: true
 
       - name: Hent nettariffer fra Energinet
+        id: tariffs
         run: python scripts/fetch_tariffs.py
         continue-on-error: true
 
-      - name: Gem nye data
+      - name: Gem validerede data
+        id: commit
+        # En kildefejl må ikke forhindre publicering af andre gyldige opdateringer.
         run: |
-          if git diff --quiet -- data/prices.json data/tariffs.json data/fx.json; then
-            echo "Ingen nye data."
-          else
+          if ! git diff --quiet -- data/prices.json data/tariffs.json data/fx.json; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data/prices.json data/tariffs.json data/fx.json
-            git commit -m "Opdater elpriser og tariffer"
-            git push
+            git commit -m "Opdater elpriser, tariffer og valuta"
+            git pull --rebase origin main
+            git push origin HEAD:main
           fi
+
+      - name: Kontroller og publicer GitHub Pages
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/publish_pages.py
+        continue-on-error: true
+
+      - name: Rapporter samlet resultat
+        if: always()
+        env:
+          TESTS: ${{ steps.tests.outcome }}
+          PRICES: ${{ steps.prices.outcome }}
+          FX: ${{ steps.fx.outcome }}
+          TARIFFS: ${{ steps.tariffs.outcome }}
+          COMMIT: ${{ steps.commit.outcome }}
+          PAGES: ${{ steps.pages.outcome }}
+        run: |
+          failed=0
+          for step in TESTS PRICES FX TARIFFS COMMIT PAGES; do
+            outcome="${!step}"
+            echo "- $step: $outcome" >> "$GITHUB_STEP_SUMMARY"
+            if [ "$outcome" != "success" ]; then
+              echo "::error::$step afsluttede med $outcome. Se det pågældende trin; tidligere gyldige data bevares ved kildefejl."
+              failed=1
+            fi
+          done
+          exit "$failed"

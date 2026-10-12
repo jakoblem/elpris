@@ -90,7 +90,12 @@ SE4 vises i **DKK**, ligesom DK1 og DK2.
 
 Ved ca. forbrugerpris lægges svenske variable afgifter, et estimeret net-/leverandørtillæg og svensk moms til spotprisen. Beløb i SEK omregnes til DKK.
 
-SEK/DKK-kursen hentes automatisk fra **Danmarks Nationalbank** og gemmes i `data/fx.json`. Der anvendes den senest tilgængelige indikative valutakurs.
+SEK/DKK-kursen hentes automatisk fra **Danmarks Nationalbanks dokumenterede XML-feed** og gemmes i `data/fx.json`. Feedets pris i DKK pr. **100 SEK** divideres med 100. Der anvendes den senest offentliggjorte indikative kurs; det er ikke en transaktionskurs.
+
+- [Nationalbankens dokumentation og XML-links](https://www.nationalbanken.dk/da/vores-arbejde/stabile-priser-pengepolitik-og-dansk-oekonomi/valutakurser)
+- [Dagligt XML-feed](https://www.nationalbanken.dk/api/currencyratesxml?lang=da)
+
+`rate_date` er kildens observationsdato, mens `generated_at` er tidspunktet for den seneste ændring af den gemte observation. Samme kurs på en ny observationsdato opdaterer derfor filen. Weekend og helligdage kan genbruge seneste bankdags kurs; observationer over syv kalenderdage gamle, fremtidige datoer, manglende/dobbelte SEK-rækker, forkert referencevaluta og kurser uden for sikkerhedsintervallet 40–100 DKK pr. 100 SEK afvises. Ved afvisning eller netværksfejl bevares filen, og Actions melder fejl. En varig kursændring uden for sikkerhedsintervallet kræver manuel vurdering af grænserne.
 
 Den svenske netdel er fortsat et estimat, fordi nettariffen afhænger af det lokale svenske netselskab.
 
@@ -106,26 +111,65 @@ Ved 1-timesvisning finder siden desuden den billigste sammenhængende **5-timers
 
 ## Automatisk opdatering
 
-GitHub Actions-workflowet `.github/workflows/update-and-deploy.yml` opdaterer:
+GitHub Actions-workflowet `.github/workflows/update-and-deploy.yml` henter og validerer:
 
-- `data/prices.json` – spotpriser
-- `data/tariffs.json` – danske nettariffer
-- `data/fx.json` – SEK/DKK
+- `data/prices.json` – spotpriser fra Energinet
+- `data/tariffs.json` – danske nettariffer fra Energinet
+- `data/fx.json` – SEK/DKK fra Nationalbankens XML-feed
 
-Omkring day-ahead-publiceringen kontrolleres spotpriserne gentagne gange. Datafiler committes kun, når indholdet faktisk har ændret sig.
+Planen bruger UTC: hvert femte minut fra **11.02 til 17.57 UTC**, samt **23 minutter over hver time uden for dette vindue**. Vinduet dækker både sommer-/vintertid og forsinket offentliggørelse. Ved manglende priser fra kl. 13 dansk tid forsøger pris-scriptet højst tre gange med 60 sekunders mellemrum. Hvert HTTP-kald har en timeout på 30 sekunder og højst tre forsøg ved netværksfejl, HTTP 429 eller 5xx. Hele jobbet har en timeout på 20 minutter.
 
-Workflowet kan også startes manuelt fra fanen **Actions**.
+GitHub planlægger kørsler efter bedste evne: `schedule` kan være forsinket eller bortfalde. Udvidet tidsvindue, timevis fallback og genforsøg forbedrer genopretningen, men garanterer ikke et bestemt leveringstidspunkt. `concurrency` hindrer samtidige dataopdateringer; en ventende kørsel kan erstattes af en nyere. Hver kørsel henter seneste `main`, så et gammelt kø-event ikke starter fra gamle data.
 
-Når siden allerede står åben i browseren, kontrollerer den med mellemrum, om der er kommet nye spotprisdata.
+### Dækning og fejlstatus
+
+Priser valideres pr. område og dansk kalenderdag. Et helt døgn kræver præcis de korrekte, unikke UTC-tidspunkter med 15 minutters mellemrum: normalt 96, **92 ved overgang til sommertid** og **100 ved overgang til vintertid**. Dubletter, ugyldige tidspunkter, ikke-endelige tal og trunkerede API-svar afvises. Negative spotpriser er gyldige. EDS-parametrene `start` og `end` er danske lokale datoer; slutdatoen er eksklusiv.
+
+Et delvist eller manglende nyt døgn erstatter aldrig et tidligere komplet døgn for samme område/dato. Kun komplette døgn publiceres. Dagens priser skal være komplette i alle områder før en ny prisfil kan skrives. Uden komplette priser for i morgen vises en advarsel frem til **kl. 15.00 Europe/Copenhagen**; fra dette tidspunkt fejler pris-trinnet. Dette er projektets kontrolfrist, ikke et løfte om kildens publiceringstid. Gyldige priser for i dag kan stadig gemmes, selvom morgendagen mangler.
+
+`coverage` indeholder dato, forventet antal, antal pr. område og komplet-status for både i dag og i morgen. Actions viser dækning, valutadato og hvert trins resultat i kørselsresuméet. Ingen fil erstattes, før indholdet er serialiseret og valideret; filudskiftningen er atomisk. Tariffiler afvises, hvis de er tomme, indeholder ugyldige priser eller mister tidligere stadig gyldige selskabsprofiler.
+
+Fejl i én datakilde stopper ikke de øvrige kilder eller publicering af deres gyldige ændringer. Sidste trin markerer dog **hele kørslen som fejlet**, hvis en hentning, commit eller Pages-publicering fejlede. Tidligere data kan derfor stadig være synlige under et kildeudfald; en bevaret fil er ikke bevis på aktuelle data. Datafiler committes kun ved indholdsændring. `generated_at` er ændringstidspunkt, ikke heartbeat for hver kontrol.
+
+### Manuel genopretning og test
+
+Start **Opdater elpriser, tariffer og valuta** fra fanen Actions med branch `main`, eller:
+
+```sh
+gh workflow run update-and-deploy.yml --repo jakoblem/elpris --ref main
+```
+
+Manuel start på en feature-branch springer opdateringsjobbet over. Lokalt kræves Python 3.12 med IANA-tidszoner og ingen Python-pakker:
+
+```sh
+python -m unittest discover -s tests -v
+python scripts/fetch_prices.py --attempts 3 --poll-seconds 60
+python scripts/fetch_fx.py
+python scripts/fetch_tariffs.py
+```
+
+Testene kræver ikke netværk og dækker blandt andet sommertid, dubletter, ufuldstændige døgn, genforsøg, atomiske skriverier, ugyldige valutakurser, bevarelse af data og Pages-kontrol. `.github/workflows/tests.yml` kører testene på pull requests og relevante pushes. Når siden står åben, kontrollerer den fortsat periodisk for nye spotpriser.
+
+Hvis ingen workflows starter, kan de heller ikke selv rapportere kildefejl. Ved krav om en fast leveringstid skal en **uafhængig scheduler/monitor** overvåge `coverage` og eventuelt kalde `workflow_dispatch` med en særskilt, passende begrænset GitHub-legitimationsoplysning. En sådan ekstern tjeneste er ikke konfigureret i dette repository.
 
 ## GitHub Pages
 
-Siden publiceres med GitHub Pages fra:
+Den eksisterende publiceringskilde bevares: **Deploy from a branch → main → /(root)**. Almindelige pushes publiceres som hidtil. Et push med Actions' `GITHUB_TOKEN` er ikke i sig selv en garanti for et Pages-build. Derfor kalder `scripts/publish_pages.py` Pages' officielle build-API med `pages: write`, når den aktuelle commit ikke allerede er bygget, og venter op til cirka fem minutter på status `built` for netop denne commit. Eksisterende igangværende builds genbruges. Manglende eller fejlet publicering gør kørslen rød; næste kørsel forsøger igen, også når datafilerne er uændrede.
 
-- Branch: **main**
-- Folder: **/(root)**
+Ingen ekstra PAT eller ændring af Pages-kilden er nødvendig. GitHub CLI (`gh`) er installeret på den anvendte Ubuntu-runner. Et lokalt kald af Pages-scriptet kræver en autentificeret CLI samt `GITHUB_REPOSITORY` og skriver til den eksisterende Pages-side.
 
-Nye commits på `main` bliver automatisk publiceret af GitHub Pages.
+- [GitHub: planlagte events og begrænsninger](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+- [GitHub: GITHUB_TOKEN og Pages-builds](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
+- [GitHub: anmod om Pages-build](https://docs.github.com/en/rest/pages/pages#request-a-github-pages-build)
+- [Energinet: API-guide og datoparametre](https://www.energidataservice.dk/guides/api-guides)
+
+## Hændelsen 12. oktober 2026
+
+Den kontrollerede kørsel [38238179751](https://github.com/jakoblem/elpris/actions/runs/38238179751) var udløst af `schedule` kl. 10.44.09 UTC. Jobbet kørte cirka syv sekunder. Pris-trinnet loggede `No new price data; leaving prices.json unchanged.`; kun tariffilen blev committet. Den grønne status kontrollerede altså ikke, om morgendagen var tilgængelig.
+
+Ved undersøgelsen viste Actions-API'et stadig ingen senere dataopdateringskørsler. Workflowet var `active` på `main`, cron-udtrykkene var gyldige, og ingen af de registrerede schedule-kørsler var ventende eller annullerede. Der var også store mellemrum mellem planlagte kørsler på de foregående dage. Det peger på forsinkede/udeblevne GitHub schedule-events, ikke et langt kørende pris-script. API'et udstiller ikke årsagen til events, der aldrig blev til kørsler; en præcis platformårsag kan kun bekræftes af GitHub. Den automatiske deaktivering efter 60 dages inaktivitet forklarer ikke et aktivt repository med aktuelle kørsler.
+
+En efterfølgende direkte kildekontrol fandt alle 96 intervaller for **13. oktober i DK1, DK2 og SE4**. Der er ikke belæg for at fastslå, præcis hvornår kilden offentliggjorde dem. Valutaproblemet skyldtes separat, at workflowet aldrig kaldte det eksisterende FX-script; HTML-parseren er nu erstattet af det dokumenterede XML-feed.
 
 ## Begrænsninger
 
@@ -144,4 +188,4 @@ Brug derfor totalprisen som et praktisk estimat til fx planlægning af elbilopla
 
 ## Publicering
 
-GitHub Pages publicerer automatisk ændringer fra `main`. Prisdata opdateres separat af GitHub Actions.
+GitHub Pages publicerer fra `main`. Dataworkflowet gemmer validerede ændringer og kontrollerer, at deres commit bliver bygget af Pages.
