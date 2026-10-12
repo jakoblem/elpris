@@ -3467,6 +3467,14 @@
     ]
   },
   "coverage": {
+    "today_date": "2026-10-12",
+    "today_expected_intervals": 96,
+    "today_counts": {
+      "DK1": 96,
+      "DK2": 96,
+      "SE4": 96
+    },
+    "today_complete": true,
     "tomorrow_date": "2026-10-13",
     "tomorrow_expected_intervals": 96,
     "tomorrow_counts": {

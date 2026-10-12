@@ -9,14 +9,15 @@ variable charges.
 from __future__ import annotations
 
 import json
+import math
 import re
 import statistics
-import sys
 import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+from data_utils import diagnostic, read_json, request_bytes, run, summary, write_json
 
 API = "https://api.energidataservice.dk/dataset/DatahubPricelist"
 OUT = Path(__file__).resolve().parents[1] / "data" / "tariffs.json"
@@ -121,6 +122,8 @@ def hourly_prices(record: dict) -> list[float] | None:
     populated = [v for v in values if v is not None]
     if not populated:
         return None
+    if any(not math.isfinite(v) or v < 0 for v in populated):
+        raise ValueError("Tariff contains a non-finite or negative hourly price")
 
     if len(populated) == 1:
         return [round(populated[0], 4)] * 24
@@ -151,15 +154,7 @@ def fetch_records() -> list[dict]:
         "limit": "10000",
     }
     url = API + "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(
-        url,
-        headers={
-            "User-Agent": "elpris-github-pages/1.0",
-            "Accept": "application/json",
-        },
-    )
-    with urllib.request.urlopen(req, timeout=45) as response:
-        payload = json.load(response)
+    payload = json.loads(request_bytes(url))
 
     records = payload.get("records")
     if not isinstance(records, list):
@@ -237,10 +232,21 @@ def main() -> int:
         if profile:
             profiles.append(profile)
         else:
-            print(f"No current household tariff found for {company['name']}", file=sys.stderr)
+            diagnostic("warning", f"No current household tariff found for {company['name']}")
 
     if not profiles:
         raise RuntimeError("No household grid tariff profiles could be extracted")
+
+    old = read_json(OUT)
+    if isinstance(old, dict):
+        # Do not replace a useful set of profiles with a temporarily partial response.
+        previous_ids = {
+            profile["id"] for profile in old.get("profiles", [])
+            if not profile.get("valid_to") or parse_local(profile["valid_to"]) > now
+        }
+        missing = previous_ids - {profile["id"] for profile in profiles}
+        if missing:
+            raise ValueError(f"Still-valid tariff profiles disappeared: {sorted(missing)}")
 
     median_hourly = [
         round(statistics.median(profile["hourly_ex_vat_ore"][hour] for profile in profiles), 4)
@@ -262,26 +268,10 @@ def main() -> int:
         "profiles": profiles,
     }
 
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-
-    # Avoid needless commits when only the fetch timestamp changed.
-    if OUT.exists():
-        try:
-            old = json.loads(OUT.read_text(encoding="utf-8"))
-            old_cmp = dict(old)
-            new_cmp = dict(payload)
-            old_cmp.pop("generated_at", None)
-            new_cmp.pop("generated_at", None)
-            if old_cmp == new_cmp:
-                print("No tariff changes; leaving tariffs.json unchanged.")
-                return 0
-        except (json.JSONDecodeError, OSError):
-            pass
-
-    OUT.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Wrote {OUT} with {len(profiles)} company profiles")
+    changed = write_json(OUT, payload)
+    summary(f"Tariffs: {len(profiles)} company profiles; {'updated' if changed else 'unchanged'}")
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(run(main))
