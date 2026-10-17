@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T18:46:17Z",
+  "generated_at": "2026-10-17T05:44:17Z",
   "source": "Energinet Energi Data Service / DatahubPricelist",
   "unit": "ore_per_kwh_ex_vat",
   "method": "Unweighted hourly median across available selected grid companies",
@@ -445,7 +445,7 @@
         },
         {
           "valid_from": "2027-04-01T00:00:00+02:00",
-          "valid_to": "2027-04-14T00:00:00+02:00",
+          "valid_to": "2027-04-15T00:00:00+02:00",
           "hourly_ex_vat_ore": [
             10.6175,
             10.6175,
@@ -548,7 +548,7 @@
         },
         {
           "valid_from": "2027-04-01T00:00:00+02:00",
-          "valid_to": "2027-04-14T00:00:00+02:00",
+          "valid_to": "2027-04-15T00:00:00+02:00",
           "hourly_ex_vat_ore": [
             11.5336,
             11.5336,
