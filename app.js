@@ -158,6 +158,43 @@ function formatClock(epochMs) {
   }).format(new Date(epochMs));
 }
 
+// Work with Copenhagen calendar dates, independently of the browser's timezone.
+const localDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit"
+});
+
+function localDateKey(epochMs) {
+  const parts = Object.fromEntries(localDateFormatter.formatToParts(new Date(epochMs))
+    .filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+  return parts.year + "-" + parts.month + "-" + parts.day;
+}
+
+function tomorrowDateKey(epochMs) {
+  const today = localDateKey(epochMs);
+  // UTC is only used to advance the calendar fields, never as a local instant.
+  return new Date(Date.UTC(
+    Number(today.slice(0, 4)), Number(today.slice(5, 7)) - 1,
+    Number(today.slice(8, 10)) + 1
+  )).toISOString().slice(0, 10);
+}
+
+function formatPeriodClock(epochMs) {
+  const clock = formatClock(epochMs);
+  const repeated = [-3600000, 3600000].some(function (shift) {
+    return localDateKey(epochMs + shift) === localDateKey(epochMs)
+      && formatClock(epochMs + shift) === clock;
+  });
+  if (!repeated) return clock;
+  const offset = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Copenhagen", timeZoneName: "shortOffset"
+  }).formatToParts(new Date(epochMs)).find(part => part.type === "timeZoneName").value;
+  return clock + " (" + offset.replace("GMT", "UTC") + ")";
+}
+
+function formatPeriod(item) {
+  return formatPeriodClock(item.start) + "–" + formatPeriodClock(item.end);
+}
+
 function formatDay(epochMs) {
   return new Intl.DateTimeFormat("da-DK", {
     timeZone: "Europe/Copenhagen",
@@ -274,20 +311,7 @@ function rawItems() {
   const now = Date.now();
   // Include all remaining periods today and all of tomorrow, up to local midnight.
   // Compare Copenhagen calendar dates so daylight-saving transitions work too.
-  const dateFormatter = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit"
-  });
-  function localDateKey(timestamp) {
-    const parts = Object.fromEntries(dateFormatter.formatToParts(new Date(timestamp))
-      .filter(part => part.type !== "literal").map(part => [part.type, part.value]));
-    return parts.year + "-" + parts.month + "-" + parts.day;
-  }
-  const todayKey = localDateKey(now);
-  const tomorrowDate = new Date(Date.UTC(
-    Number(todayKey.slice(0, 4)), Number(todayKey.slice(5, 7)) - 1,
-    Number(todayKey.slice(8, 10)) + 1
-  ));
-  const tomorrowKey = tomorrowDate.toISOString().slice(0, 10);
+  const tomorrowKey = tomorrowDateKey(now);
 
   return state.data.areas[state.area]
     .map(function (row) {
@@ -457,11 +481,11 @@ function renderSummary(items) {
   const avg = priced.reduce(function (sum, item) { return sum + item.displayPrice; }, 0) / priced.length;
 
   els.minPrice.textContent = formatPrice(low.displayPrice);
-  els.minTime.textContent = formatClock(low.start) + "–" + formatClock(low.end);
+  els.minTime.textContent = formatPeriod(low);
   els.avgPrice.textContent = formatPrice(avg);
   els.periodCount.textContent = priced.length + (state.resolution === "1h" ? " timer" : " perioder");
   els.maxPrice.textContent = formatPrice(high.displayPrice);
-  els.maxTime.textContent = formatClock(high.start) + "–" + formatClock(high.end);
+  els.maxTime.textContent = formatPeriod(high);
 }
 
 function priceBand(value, sortedPrices) {
@@ -529,7 +553,7 @@ function renderTable(items) {
     if (chargingWindow.has(item.start)) row.classList.add("charge-window");
 
     const timeCell = document.createElement("td");
-    timeCell.textContent = formatClock(item.start) + "–" + formatClock(item.end);
+    timeCell.textContent = formatPeriod(item);
     if (chargingWindow.has(item.start)) {
       const badge = document.createElement("span");
       badge.className = "charge-badge";
@@ -553,7 +577,7 @@ function renderGraph(items) {
 
   const width = 920;
   const height = 390;
-  const pad = { top: 28, right: 22, bottom: 96, left: 60 };
+  const pad = { top: 28, right: 22, bottom: 130, left: 60 };
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
   const values = items.map(displayedPrice);
@@ -576,7 +600,7 @@ function renderGraph(items) {
   const svg = document.createElementNS(ns, "svg");
   svg.setAttribute("viewBox", "0 0 " + width + " " + height);
   svg.setAttribute("role", "img");
-  svg.setAttribute("aria-label", "Elpris de kommende 24 timer");
+  svg.setAttribute("aria-label", "Elpriser resten af i dag og i morgen");
   svg.style.touchAction = "pan-y";
 
   const tooltip = document.createElement("div");
@@ -584,7 +608,7 @@ function renderGraph(items) {
   tooltip.hidden = true;
   tooltip.setAttribute("role", "status");
   tooltip.setAttribute("aria-live", "polite");
-  els.graphWrap.insertAdjacentElement("afterend", tooltip);
+  els.graphWrap.appendChild(tooltip);
 
   for (let i = 0; i < 5; i += 1) {
     const value = yMin + ((yMax - yMin) * i / 4);
@@ -654,7 +678,7 @@ function renderGraph(items) {
     label.setAttribute("text-anchor", "start");
     label.setAttribute("class", "graph-label");
     label.setAttribute("transform", "rotate(90 " + x(idx) + " " + (height - pad.bottom + 18) + ")");
-    label.textContent = formatClock(items[idx].start);
+    label.textContent = formatPeriodClock(items[idx].start);
     svg.appendChild(label);
   });
 
@@ -669,7 +693,7 @@ function renderGraph(items) {
       return Math.abs(item.start - targetTime) < Math.abs(best.start - targetTime) ? item : best;
     }, raw[0]);
     const price = displayedPrice(quarter);
-    tooltip.textContent = formatClock(quarter.start) + "–" + formatClock(quarter.end) + " · " + formatPrice(price);
+    tooltip.textContent = formatPeriod(quarter) + " · " + formatPrice(price);
     tooltip.hidden = false;
 
   }
@@ -721,12 +745,7 @@ function render() {
     : "Spotpris inkl. moms · øre/kWh";
 
   if (state.data && state.data.coverage) {
-    const tomorrow = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Europe/Copenhagen",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit"
-    }).format(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    const tomorrow = tomorrowDateKey(Date.now());
     const coverageDate = state.data.coverage.tomorrow_date;
     const complete = state.data.coverage.tomorrow_complete && coverageDate === tomorrow;
     els.coverageBadge.textContent = complete ? "I morgen klar" : "Afventer i morgen";
@@ -897,9 +916,9 @@ async function loadData() {
 
 async function refreshPrices() {
   try {
-    const before = state.data && state.data.generated_at;
     await loadPrices();
-    if (!before || before !== state.data.generated_at) render();
+    // Time and the calendar day change even when the source file is unchanged.
+    render();
   } catch (error) {
     console.warn("Automatisk prisopdatering fejlede", error);
   }
