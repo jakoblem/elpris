@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-16T15:07:36Z",
+  "generated_at": "2026-10-19T17:18:01Z",
   "source": "Danmarks Nationalbank",
   "source_url": "https://www.nationalbanken.dk/api/currencyratesxml?lang=da",
-  "rate_date": "2026-10-16",
-  "sek_dkk": 0.6707,
+  "rate_date": "2026-10-19",
+  "sek_dkk": 0.6732,
   "quoted_as": "DKK per SEK",
   "indicative": true
 }
