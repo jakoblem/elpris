@@ -836,11 +836,58 @@ els.tariffForm.addEventListener("submit", function (event) {
   render();
 });
 
+// Cloudflare fetches prices independently of GitHub Actions.
+// The committed GitHub JSON remains a fallback if Cloudflare is unavailable.
+const CLOUDFLARE_PRICES_URL = "https://elpris-data.jlemvig.workers.dev/prices.json";
+
+function validPricePayload(payload) {
+  if (!payload || !payload.areas || !payload.coverage || !Number.isFinite(Date.parse(payload.generated_at))) {
+    return false;
+  }
+  return ["DK1", "DK2", "SE4"].every(function (area) {
+    const rows = payload.areas[area];
+    if (!Array.isArray(rows) || !rows.length) return false;
+    const times = new Set();
+    return rows.every(function (row) {
+      const timestamp = Date.parse(row.time_utc);
+      const price = Number(row.price_ore_kwh);
+      if (!Number.isFinite(timestamp) || !Number.isFinite(price) || times.has(timestamp)) return false;
+      times.add(timestamp);
+      return true;
+    });
+  });
+}
+
+async function fetchPricePayload(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(function () { controller.abort(); }, 8000);
+  try {
+    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const payload = await response.json();
+    if (!validPricePayload(payload)) throw new Error("Ugyldige eller ufuldstændige prisdata");
+    return payload;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function loadPrices() {
-  const response = await fetch("./data/prices.json?v=" + Date.now(), { cache: "no-store" });
-  if (!response.ok) throw new Error("HTTP " + response.status);
-  state.data = await response.json();
-  els.status.textContent = formatUpdated(state.data.generated_at);
+  let source = "Cloudflare";
+  let payload;
+
+  try {
+    payload = await fetchPricePayload(CLOUDFLARE_PRICES_URL);
+  } catch (error) {
+    console.warn("Cloudflare-priser utilgængelige; bruger GitHub-reserve", error);
+    source = "GitHub";
+    payload = await fetchPricePayload("./data/prices.json?v=" + Date.now());
+  }
+
+  state.data = payload;
+  state.priceSource = source;
+  els.status.textContent = formatUpdated(payload.generated_at)
+    + (source === "GitHub" ? " · reservekilde" : "");
 }
 
 async function loadFx() {
