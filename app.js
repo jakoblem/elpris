@@ -872,22 +872,67 @@ async function fetchPricePayload(url) {
   }
 }
 
+function copenhagenDateKey(timestamp) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date(timestamp));
+  const p = Object.fromEntries(parts.filter(x => x.type !== "literal").map(x => [x.type, x.value]));
+  return p.year + "-" + p.month + "-" + p.day;
+}
+
+function tomorrowKey() {
+  const today = copenhagenDateKey(Date.now());
+  const date = new Date(today + "T12:00:00Z");
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function priceDataScore(payload) {
+  const coverage = payload.coverage || {};
+  const expectedTomorrow = tomorrowKey();
+  const tomorrowCounts = coverage.tomorrow_counts || {};
+  const tomorrowTotal = ["DK1", "DK2", "SE4"].reduce(function (sum, area) {
+    return sum + Number(tomorrowCounts[area] || 0);
+  }, 0);
+  const currentDate = copenhagenDateKey(Date.now());
+  const hasCurrentData = ["DK1", "DK2", "SE4"].every(function (area) {
+    return payload.areas[area].some(function (row) {
+      return copenhagenDateKey(Date.parse(row.time_utc)) === currentDate;
+    });
+  });
+  return (hasCurrentData ? 100000 : 0)
+    + (coverage.tomorrow_date === expectedTomorrow ? tomorrowTotal : 0);
+}
+
 async function loadPrices() {
-  let source = "Cloudflare";
-  let payload;
+  const githubUrl = "./data/prices.json?v=" + Date.now();
+  // Prefer Cloudflare, but don't replace complete GitHub prices with older or
+  // less complete Cloudflare data if a scheduled refresh has been delayed.
+  const results = await Promise.allSettled([
+    fetchPricePayload(CLOUDFLARE_PRICES_URL),
+    fetchPricePayload(githubUrl)
+  ]);
 
-  try {
-    payload = await fetchPricePayload(CLOUDFLARE_PRICES_URL);
-  } catch (error) {
-    console.warn("Cloudflare-priser utilgængelige; bruger GitHub-reserve", error);
-    source = "GitHub";
-    payload = await fetchPricePayload("./data/prices.json?v=" + Date.now());
+  const candidates = results.flatMap(function (result, i) {
+    return result.status === "fulfilled"
+      ? [{ payload: result.value, source: i === 0 ? "Cloudflare" : "GitHub" }]
+      : [];
+  });
+  if (!candidates.length) {
+    throw new Error("Ingen af priskilderne er tilgængelige");
   }
+  candidates.sort(function (a, b) {
+    const difference = priceDataScore(b.payload) - priceDataScore(a.payload);
+    if (difference !== 0) return difference;
+    // When equally complete, use Cloudflare; it updates independently of GitHub.
+    return a.source === "Cloudflare" ? -1 : 1;
+  });
 
-  state.data = payload;
-  state.priceSource = source;
-  els.status.textContent = formatUpdated(payload.generated_at)
-    + (source === "GitHub" ? " · reservekilde" : "");
+  const chosen = candidates[0];
+  state.data = chosen.payload;
+  state.priceSource = chosen.source;
+  els.status.textContent = formatUpdated(chosen.payload.generated_at)
+    + (chosen.source === "GitHub" ? " · reservekilde" : "");
 }
 
 async function loadFx() {
