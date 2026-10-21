@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T15:31:50Z",
+  "generated_at": "2026-10-21T06:08:59Z",
   "source": "Energinet Energi Data Service / DatahubPricelist",
   "unit": "ore_per_kwh_ex_vat",
   "method": "Unweighted hourly median across available selected grid companies",
@@ -445,7 +445,7 @@
         },
         {
           "valid_from": "2027-04-01T00:00:00+02:00",
-          "valid_to": "2027-04-18T00:00:00+02:00",
+          "valid_to": "2027-04-19T00:00:00+02:00",
           "hourly_ex_vat_ore": [
             10.6175,
             10.6175,
@@ -548,7 +548,7 @@
         },
         {
           "valid_from": "2027-04-01T00:00:00+02:00",
-          "valid_to": "2027-04-18T00:00:00+02:00",
+          "valid_to": "2027-04-19T00:00:00+02:00",
           "hourly_ex_vat_ore": [
             11.5336,
             11.5336,
@@ -1590,39 +1590,6 @@
       "valid_from": "2026-10-01T00:00:00+02:00",
       "valid_to": "2026-11-01T00:00:00+01:00",
       "periods": [
-        {
-          "valid_from": "2026-08-01T00:00:00+02:00",
-          "valid_to": "2026-10-01T00:00:00+02:00",
-          "hourly_ex_vat_ore": [
-            6.49,
-            6.49,
-            6.49,
-            6.49,
-            6.49,
-            6.49,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            9.74,
-            25.31,
-            25.31,
-            25.31,
-            25.31,
-            9.74,
-            9.74,
-            9.74
-          ],
-          "charge_owners": [
-            "Elektrus A/S"
-          ]
-        },
         {
           "valid_from": "2026-10-01T00:00:00+02:00",
           "valid_to": "2026-11-01T00:00:00+01:00",
