@@ -44,6 +44,8 @@ Kilde: Energinet, Energi Data Service. Data anvendes under CC BY 4.0.
 
 Day-ahead-dataene er i 15-minutters opløsning.
 
+Døgn afgrænses efter kalenderdatoen i `Europe/Copenhagen`, også når døgnet har 23 eller 25 timer. Ved vintertid bevares de to kl. 02-timer som separate UTC-perioder. Gentagne klokkeslæt vises med `(UTC+2)` og `(UTC+1)` i tabel, graf og prisoversigt. Dækningsindikatoren sammenligner med næste danske kalenderdato og genberegnes ved sidens periodiske priskontrol, også når prisfilen er uændret.
+
 Ved **1 time** beregner siden timeprisen som gennemsnittet af de fire underliggende kvarterspriser. Ved tryk på grafen vises det nærmeste underliggende 15-minuttersinterval og dets pris, også når grafen står på timevisning.
 
 ## Ca. forbrugerpris i Danmark
@@ -143,10 +145,14 @@ Manuel start på en feature-branch springer opdateringsjobbet over. Lokalt kræv
 
 ```sh
 python -m unittest discover -s tests -v
+node --test tests/test_app.cjs
+node --check app.js && node --check sw.js
 python scripts/fetch_prices.py --attempts 3 --poll-seconds 60
 python scripts/fetch_fx.py
 python scripts/fetch_tariffs.py
 ```
+
+Frontendtestene kræver Node.js 22 eller nyere uden ekstra pakker og kontrollerer kalenderdatoer omkring begge tidsomstillingstyper, gentagne klokkeslæt, alle 92/96/100 kvarterer i tabel/graf, timegennemsnit, grafens prisopslag, moms, tariffer, SE4-valuta og opladningsvinduer.
 
 Testene kræver ikke netværk og dækker blandt andet sommertid, dubletter, ufuldstændige døgn, genforsøg, atomiske skriverier, ugyldige valutakurser, bevarelse af data og Pages-kontrol. `.github/workflows/tests.yml` kører testene på pull requests og relevante pushes. Når siden står åben, kontrollerer den fortsat periodisk for nye spotpriser.
 
