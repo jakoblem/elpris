@@ -855,11 +855,103 @@ els.tariffForm.addEventListener("submit", function (event) {
   render();
 });
 
+// Cloudflare fetches prices independently of GitHub Actions.
+// The committed GitHub JSON remains a fallback if Cloudflare is unavailable.
+const CLOUDFLARE_PRICES_URL = "https://elpris-data.jlemvig.workers.dev/prices.json";
+
+function validPricePayload(payload) {
+  if (!payload || !payload.areas || !payload.coverage || !Number.isFinite(Date.parse(payload.generated_at))) {
+    return false;
+  }
+  return ["DK1", "DK2", "SE4"].every(function (area) {
+    const rows = payload.areas[area];
+    if (!Array.isArray(rows) || !rows.length) return false;
+    const times = new Set();
+    return rows.every(function (row) {
+      const timestamp = Date.parse(row.time_utc);
+      const price = Number(row.price_ore_kwh);
+      if (!Number.isFinite(timestamp) || !Number.isFinite(price) || times.has(timestamp)) return false;
+      times.add(timestamp);
+      return true;
+    });
+  });
+}
+
+async function fetchPricePayload(url) {
+  const controller = new AbortController();
+  const timeout = setTimeout(function () { controller.abort(); }, 8000);
+  try {
+    const response = await fetch(url, { cache: "no-store", signal: controller.signal });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+    const payload = await response.json();
+    if (!validPricePayload(payload)) throw new Error("Ugyldige eller ufuldstændige prisdata");
+    return payload;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function copenhagenDateKey(timestamp) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit"
+  }).formatToParts(new Date(timestamp));
+  const p = Object.fromEntries(parts.filter(x => x.type !== "literal").map(x => [x.type, x.value]));
+  return p.year + "-" + p.month + "-" + p.day;
+}
+
+function tomorrowKey() {
+  const today = copenhagenDateKey(Date.now());
+  const date = new Date(today + "T12:00:00Z");
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function priceDataScore(payload) {
+  const coverage = payload.coverage || {};
+  const expectedTomorrow = tomorrowKey();
+  const tomorrowCounts = coverage.tomorrow_counts || {};
+  const tomorrowTotal = ["DK1", "DK2", "SE4"].reduce(function (sum, area) {
+    return sum + Number(tomorrowCounts[area] || 0);
+  }, 0);
+  const currentDate = copenhagenDateKey(Date.now());
+  const hasCurrentData = ["DK1", "DK2", "SE4"].every(function (area) {
+    return payload.areas[area].some(function (row) {
+      return copenhagenDateKey(Date.parse(row.time_utc)) === currentDate;
+    });
+  });
+  return (hasCurrentData ? 100000 : 0)
+    + (coverage.tomorrow_date === expectedTomorrow ? tomorrowTotal : 0);
+}
+
 async function loadPrices() {
-  const response = await fetch("./data/prices.json?v=" + Date.now(), { cache: "no-store" });
-  if (!response.ok) throw new Error("HTTP " + response.status);
-  state.data = await response.json();
-  els.status.textContent = formatUpdated(state.data.generated_at);
+  const githubUrl = "./data/prices.json?v=" + Date.now();
+  // Prefer Cloudflare, but don't replace complete GitHub prices with older or
+  // less complete Cloudflare data if a scheduled refresh has been delayed.
+  const results = await Promise.allSettled([
+    fetchPricePayload(CLOUDFLARE_PRICES_URL),
+    fetchPricePayload(githubUrl)
+  ]);
+
+  const candidates = results.flatMap(function (result, i) {
+    return result.status === "fulfilled"
+      ? [{ payload: result.value, source: i === 0 ? "Cloudflare" : "GitHub" }]
+      : [];
+  });
+  if (!candidates.length) {
+    throw new Error("Ingen af priskilderne er tilgængelige");
+  }
+  candidates.sort(function (a, b) {
+    const difference = priceDataScore(b.payload) - priceDataScore(a.payload);
+    if (difference !== 0) return difference;
+    // When equally complete, use Cloudflare; it updates independently of GitHub.
+    return a.source === "Cloudflare" ? -1 : 1;
+  });
+
+  const chosen = candidates[0];
+  state.data = chosen.payload;
+  state.priceSource = chosen.source;
+  els.status.textContent = formatUpdated(chosen.payload.generated_at)
+    + (chosen.source === "GitHub" ? " · reservekilde" : "");
 }
 
 async function loadFx() {

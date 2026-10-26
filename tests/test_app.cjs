@@ -23,6 +23,7 @@ function app(now) {
   const nodes = new Map();
   const context = vm.createContext({
     Date: class extends Date { static now() { return clock; } }, Intl, console,
+    AbortController, setTimeout() { return 0; }, clearTimeout() {},
     localStorage: { getItem() { return null; }, setItem() {} },
     sessionStorage: { getItem() { return null; } },
     document: {
@@ -37,11 +38,11 @@ function app(now) {
     run: code => vm.runInContext(code, context), nodes,
     time: value => { clock = Date.parse(value); },
     data(rows, coverage) {
-      context.fixture = { areas: { DK1: rows, DK2: rows, SE4: rows }, coverage };
+      context.fixture = { generated_at: '2026-10-24T20:00:00Z', areas: { DK1: rows, DK2: rows, SE4: rows }, coverage };
       vm.runInContext('state.data = fixture', context);
     },
-    async refresh() {
-      context.fetch = async () => ({ ok: true, json: async () => context.fixture });
+    async refresh(responder) {
+      context.fetch = responder || (async () => ({ ok: true, json: async () => context.fixture }));
       await vm.runInContext('refreshPrices()', context);
     }
   };
@@ -174,4 +175,24 @@ test('VAT, tariff validity, SE4 conversion and charging windows retain their cal
   const best = a.run('Array.from(bestChargingWindow(currentItems(), 5))');
   assert.equal(best.length, 5);
   best.forEach((time, i) => assert.equal(time, Date.parse('2026-10-24T22:00:00Z') + i * 3600000));
+});
+
+
+test('current loader retains complete GitHub data over incomplete Cloudflare and falls back on errors', async () => {
+  const a = app('2026-10-25T00:30:00+02:00');
+  a.data(rows('2026-10-24T22:00:00Z', 196), {
+    tomorrow_date: '2026-10-26', tomorrow_complete: true,
+    tomorrow_counts: { DK1: 96, DK2: 96, SE4: 96 }
+  });
+  const complete = a.run('fixture');
+  const partial = { ...complete, coverage: { tomorrow_date: '2026-10-26', tomorrow_complete: false } };
+  await a.refresh(async url => ({ ok: true, json: async () => url.startsWith('https:') ? partial : complete }));
+  assert.equal(a.run('state.priceSource'), 'GitHub');
+  assert.equal(a.nodes.get('coverageBadge').textContent, 'I morgen klar');
+  await a.refresh(async url => {
+    if (url.startsWith('https:')) throw new Error('offline');
+    return { ok: true, json: async () => complete };
+  });
+  assert.equal(a.run('state.data'), complete);
+  assert.equal(a.run('state.priceSource'), 'GitHub');
 });
