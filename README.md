@@ -133,6 +133,16 @@ Et delvist eller manglende nyt døgn erstatter aldrig et tidligere komplet døgn
 
 Fejl i én datakilde stopper ikke de øvrige kilder eller publicering af deres gyldige ændringer. Sidste trin markerer dog **hele kørslen som fejlet**, hvis en hentning, commit eller Pages-publicering fejlede. Tidligere data kan derfor stadig være synlige under et kildeudfald; en bevaret fil er ikke bevis på aktuelle data. Datafiler committes kun ved indholdsændring. `generated_at` er ændringstidspunkt, ikke heartbeat for hver kontrol.
 
+### Tarifdækning
+
+Tarifindlæsningen gennemløber DatahubPricelist i sider på højst 10.000 rækker med en fast sortering på `ValidFrom` og tariffens nøgle. Den fortsætter til en tom side, også efter korte sider; API-feltet `total` tæller kun rækker i det enkelte svar. Ugyldige svar, uoverensstemmelse mellem `total` og rækker, gentagne nøgler eller fejl på en senere side afbryder opdateringen før skrivning. En sikkerhedsgrænse på 100 sider forhindrer ubegrænset indlæsning.
+
+Der bruges ingen nedre `ValidFrom`-grænse: en gammel startdato betyder ikke, at tariffen er udløbet. Fremtidige perioder frem til starten af året om to år hentes fortsat. En profil skal have en periode, der er gyldig nu (`ValidFrom <= nu < ValidTo`, eller ingen slutdato); fremtidige eller udløbne perioder bruges ikke som erstatning for aktuelle priser. Kontrollen for forsvundne, stadig gyldige profiler bevarer fortsat den gamle fil og melder fejl.
+
+Fejlen [29. oktober 2026](https://github.com/jakoblem/elpris/actions/runs/40855963695) kunne reproduceres samme dag: den gamle forespørgsel returnerede præcis 10.000 rækker, med ældste `ValidFrom` 17. oktober. De aktuelle tariffer for Konstant, Nord Energi Net og RAH Net begyndte 1. oktober og fandtes på næste side under de allerede understøttede selskabsnavne. En fuld indlæsning gav 114.268 D03-rækker og 18 aktuelle selskabsprofiler, inklusive Elinord og Forsyning Elnet. De tre berørte profilers timepriser var identiske med den bevarede fil. Dette er en reproduktion mod dagens API, ikke et arkiv af det præcise svar kl. 10.14 UTC.
+
+Se [API-guiden](https://www.energidataservice.dk/guides/api-guides) og [datasættets metadata](https://api.energidataservice.dk/meta/dataset/DatahubPricelist) for offset/limit, sortering og filtrering på `ValidFrom`. Pagination er ikke et transaktionelt snapshot; kildeændringer, der giver gentagne nøgler, afvises, og beskyttelsen mod forsvundne profiler gælder også efter vellykket pagination.
+
 ### Manuel genopretning og test
 
 Start **Opdater elpriser, tariffer og valuta** fra fanen Actions med branch `main`, eller:
