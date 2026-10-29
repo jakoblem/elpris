@@ -239,15 +239,52 @@ def main() -> int:
 
     old = read_json(OUT)
     if isinstance(old, dict):
-        # Do not replace a useful set of profiles with a temporarily partial response.
-        previous_ids = {
-            profile["id"] for profile in old.get("profiles", [])
-            if not profile.get("valid_to") or parse_local(profile["valid_to"]) > now
-        }
-        missing = previous_ids - {profile["id"] for profile in profiles}
-        if missing:
-            raise ValueError(f"Still-valid tariff profiles disappeared: {sorted(missing)}")
+        # DataHub sometimes omits a few grid owners from an otherwise valid
+        # response. Preserve their previously validated, still-current profiles
+        # rather than failing the entire daily update or silently dropping them.
+        # Expired or malformed profiles must never be carried forward.
+        current_ids = {profile["id"] for profile in profiles}
+        restored = []
+        for previous in old.get("profiles", []):
+            if not isinstance(previous, dict):
+                continue
+            profile_id = previous.get("id")
+            if not isinstance(profile_id, str) or profile_id in current_ids:
+                continue
+            try:
+                periods = previous.get("periods")
+                if not isinstance(periods, list) or not periods:
+                    continue
+                current_periods = [
+                    period for period in periods
+                    if isinstance(period, dict)
+                    and parse_local(period.get("valid_from")) is not None
+                    and parse_local(period["valid_from"]) <= now
+                    and (not period.get("valid_to") or parse_local(period["valid_to"]) > now)
+                    and isinstance(period.get("hourly_ex_vat_ore"), list)
+                    and len(period["hourly_ex_vat_ore"]) == 24
+                    and all(
+                        isinstance(value, (int, float)) and not isinstance(value, bool)
+                        and math.isfinite(value) and value >= 0
+                        for value in period["hourly_ex_vat_ore"]
+                    )
+                ]
+                if not current_periods:
+                    continue
+                current_period = max(current_periods, key=lambda p: parse_local(p["valid_from"]))
+                restored_profile = dict(previous)
+                restored_profile["hourly_ex_vat_ore"] = current_period["hourly_ex_vat_ore"]
+                restored_profile["valid_from"] = current_period["valid_from"]
+                restored_profile["valid_to"] = current_period.get("valid_to")
+                profiles.append(restored_profile)
+                restored.append(profile_id)
+                current_ids.add(profile_id)
+            except (TypeError, ValueError, OverflowError):
+                continue
+        if restored:
+            diagnostic("warning", f"Using still-valid cached tariff profiles: {sorted(restored)}")
 
+    profiles.sort(key=lambda profile: profile["name"])
     median_hourly = [
         round(statistics.median(profile["hourly_ex_vat_ore"][hour] for profile in profiles), 4)
         for hour in range(24)
