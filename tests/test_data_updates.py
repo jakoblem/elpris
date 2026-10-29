@@ -283,6 +283,66 @@ class TariffTests(FileTest):
             self.assertEqual(data_utils.run(tariffs.main), 1)
         self.assertEqual(self.out.read_bytes(), before)
 
+    def test_missing_company_uses_still_valid_cached_profile(self):
+        now = datetime.now(tariffs.COPENHAGEN)
+        from_date = (now - timedelta(days=1)).isoformat()
+        to_date = (now + timedelta(days=30)).isoformat()
+        previous = {
+            "profiles": [{
+                "id": "konstant",
+                "name": "Konstant",
+                "valid_from": from_date,
+                "valid_to": to_date,
+                "hourly_ex_vat_ore": [6.05] * 24,
+                "periods": [{
+                    "valid_from": from_date,
+                    "valid_to": to_date,
+                    "hourly_ex_vat_ore": [6.05] * 24,
+                    "charge_owners": ["Konstant Net A/S"]
+                }]
+            }]
+        }
+        self.save(previous)
+        live = {
+            "id": "radius",
+            "name": "Radius",
+            "hourly_ex_vat_ore": [31.85] * 24,
+            "valid_from": from_date,
+            "valid_to": to_date,
+            "periods": []
+        }
+        with patch.object(tariffs, "OUT", self.out), \
+             patch.object(tariffs, "fetch_records", return_value=[{"stub": True}]), \
+             patch.object(tariffs, "profile_for_company", side_effect=lambda records, company, now: live if company["id"] == "radius" else None):
+            self.assertEqual(tariffs.main(), 0)
+        updated = json.loads(self.out.read_text())
+        self.assertEqual({p["id"] for p in updated["profiles"]}, {"radius", "konstant"})
+        self.assertEqual(updated["available_company_count"], 2)
+        self.assertAlmostEqual(updated["default_profile"]["hourly_ex_vat_ore"][0], (6.05 + 31.85) / 2)
+
+    def test_expired_cached_company_not_restored(self):
+        now = datetime.now(tariffs.COPENHAGEN)
+        self.save({"profiles": [{
+            "id": "expired",
+            "name": "Expired",
+            "valid_to": (now - timedelta(days=1)).isoformat(),
+            "periods": [{
+                "valid_from": (now - timedelta(days=30)).isoformat(),
+                "valid_to": (now - timedelta(days=1)).isoformat(),
+                "hourly_ex_vat_ore": [1.0] * 24
+            }]
+        }]})
+        live = {
+            "id": "radius", "name": "Radius", "hourly_ex_vat_ore": [31.85] * 24,
+            "periods": []
+        }
+        with patch.object(tariffs, "OUT", self.out), \
+             patch.object(tariffs, "fetch_records", return_value=[{"stub": True}]), \
+             patch.object(tariffs, "profile_for_company", side_effect=lambda records, company, now: live if company["id"] == "radius" else None):
+            self.assertEqual(tariffs.main(), 0)
+        updated = json.loads(self.out.read_text())
+        self.assertEqual([p["id"] for p in updated["profiles"]], ["radius"])
+
     def test_disappearing_current_profile_preserves_previous_file(self):
         before = self.save({"profiles": [{"id": "missing", "valid_to": None}]})
         with patch.object(tariffs, "OUT", self.out), patch.object(tariffs, "fetch_records", return_value=[]), patch.object(tariffs, "profile_for_company", return_value={"id": "present"}):
