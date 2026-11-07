@@ -146,20 +146,43 @@ def hourly_prices(record: dict) -> list[float] | None:
 
 
 def fetch_records() -> list[dict]:
+    # start/end filter ValidFrom, not interval overlap. A lower bound would
+    # exclude old tariffs that are still valid. Keep future seasonal periods.
     params = {
-        "start": "StartOfYear-P1Y",
-        "end": "StartOfYear+P2Y",
+        "end": f"{datetime.now(COPENHAGEN).year + 2}-01-01",
         "filter": json.dumps({"ChargeType": ["D03"]}, separators=(",", ":")),
-        "sort": "ValidFrom DESC",
+        # Include the complete record key so ties cannot move across pages.
+        "sort": "ValidFrom DESC,GLN_Number,ChargeType,ChargeTypeCode",
         "limit": "10000",
     }
-    url = API + "?" + urllib.parse.urlencode(params)
-    payload = json.loads(request_bytes(url))
-
-    records = payload.get("records")
-    if not isinstance(records, list):
-        raise RuntimeError("Energinet API response did not contain a records array")
-    return records
+    records = []
+    seen = set()
+    for page in range(100):
+        params["offset"] = str(len(records))
+        url = API + "?" + urllib.parse.urlencode(params)
+        payload = json.loads(request_bytes(url))
+        batch = payload.get("records") if isinstance(payload, dict) else None
+        if not isinstance(batch, list) or any(not isinstance(row, dict) for row in batch):
+            raise RuntimeError("Energinet API response did not contain a records array of objects")
+        # EDS total counts the returned page, NOT all matching database rows.
+        total = payload.get("total")
+        if type(total) is not int or total != len(batch):
+            raise RuntimeError("Incomplete Energinet API page: total does not match records")
+        if not batch:
+            summary(f"Tariff source: {len(records)} records in {page} non-empty pages")
+            return records
+        for row in batch:
+            key = tuple(row.get(field) for field in
+                        ("GLN_Number", "ChargeType", "ChargeTypeCode", "ValidFrom"))
+            if any(not isinstance(value, str) or not value for value in key):
+                raise RuntimeError("Energinet tariff record has an incomplete key")
+            if key in seen:
+                raise RuntimeError("Repeated Energinet tariff key; pagination is not stable")
+            seen.add(key)
+        records.extend(batch)
+        # Even a short page may be a server-side cap; only an empty page ends
+        # traversal. A failed later page must propagate before any file write.
+    raise RuntimeError("Energinet tariff pagination exceeded 100 pages")
 
 
 def profile_for_company(records: list[dict], company: dict, now: datetime):
@@ -174,10 +197,16 @@ def profile_for_company(records: list[dict], company: dict, now: datetime):
         vf = parse_local(record.get("ValidFrom"))
         if not vf:
             continue
+        vt = parse_local(record.get("ValidTo"))
+        if vt is not None and vt <= vf:
+            raise ValueError("Tariff validity period must end after it starts")
         key = (owner, vf.isoformat())
+        # An expired alternative with the same start must not hide a current
+        # tariff. Within that constraint retain the household scoring policy.
+        rank = (is_current(record, now), score)
         current = by_period.get(key)
-        if current is None or score > current[0]:
-            by_period[key] = (score, record)
+        if current is None or rank > current[0]:
+            by_period[key] = (rank, record)
 
     rows = [entry[1] for entry in by_period.values()]
     if not rows:
@@ -209,7 +238,7 @@ def profile_for_company(records: list[dict], company: dict, now: datetime):
         if vf <= now and (vt is None or now < vt):
             current_period = period
     if current_period is None:
-        current_period = periods[-1]
+        return None
 
     return {
         "id": company["id"],
