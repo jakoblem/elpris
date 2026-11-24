@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-24T05:23:09Z",
+  "generated_at": "2026-11-24T17:59:39Z",
   "source": "Energinet Energi Data Service / DayAheadPrices",
   "unit": "ore_per_kwh",
   "areas": {
@@ -771,6 +771,390 @@
       {
         "time_utc": "2026-11-24T22:45:00Z",
         "price_ore_kwh": 150.508
+      },
+      {
+        "time_utc": "2026-11-24T23:00:00Z",
+        "price_ore_kwh": 169.3131
+      },
+      {
+        "time_utc": "2026-11-24T23:15:00Z",
+        "price_ore_kwh": 161.2409
+      },
+      {
+        "time_utc": "2026-11-24T23:30:00Z",
+        "price_ore_kwh": 160.2767
+      },
+      {
+        "time_utc": "2026-11-24T23:45:00Z",
+        "price_ore_kwh": 160.1123
+      },
+      {
+        "time_utc": "2026-11-25T00:00:00Z",
+        "price_ore_kwh": 161.9136
+      },
+      {
+        "time_utc": "2026-11-25T00:15:00Z",
+        "price_ore_kwh": 160.6505
+      },
+      {
+        "time_utc": "2026-11-25T00:30:00Z",
+        "price_ore_kwh": 158.2811
+      },
+      {
+        "time_utc": "2026-11-25T00:45:00Z",
+        "price_ore_kwh": 154.118
+      },
+      {
+        "time_utc": "2026-11-25T01:00:00Z",
+        "price_ore_kwh": 156.9657
+      },
+      {
+        "time_utc": "2026-11-25T01:15:00Z",
+        "price_ore_kwh": 154.6561
+      },
+      {
+        "time_utc": "2026-11-25T01:30:00Z",
+        "price_ore_kwh": 151.9729
+      },
+      {
+        "time_utc": "2026-11-25T01:45:00Z",
+        "price_ore_kwh": 151.6067
+      },
+      {
+        "time_utc": "2026-11-25T02:00:00Z",
+        "price_ore_kwh": 153.8714
+      },
+      {
+        "time_utc": "2026-11-25T02:15:00Z",
+        "price_ore_kwh": 152.825
+      },
+      {
+        "time_utc": "2026-11-25T02:30:00Z",
+        "price_ore_kwh": 151.6515
+      },
+      {
+        "time_utc": "2026-11-25T02:45:00Z",
+        "price_ore_kwh": 151.6216
+      },
+      {
+        "time_utc": "2026-11-25T03:00:00Z",
+        "price_ore_kwh": 151.6366
+      },
+      {
+        "time_utc": "2026-11-25T03:15:00Z",
+        "price_ore_kwh": 151.6216
+      },
+      {
+        "time_utc": "2026-11-25T03:30:00Z",
+        "price_ore_kwh": 150.7845
+      },
+      {
+        "time_utc": "2026-11-25T03:45:00Z",
+        "price_ore_kwh": 149.1327
+      },
+      {
+        "time_utc": "2026-11-25T04:00:00Z",
+        "price_ore_kwh": 151.3301
+      },
+      {
+        "time_utc": "2026-11-25T04:15:00Z",
+        "price_ore_kwh": 151.36
+      },
+      {
+        "time_utc": "2026-11-25T04:30:00Z",
+        "price_ore_kwh": 151.7861
+      },
+      {
+        "time_utc": "2026-11-25T04:45:00Z",
+        "price_ore_kwh": 154.3721
+      },
+      {
+        "time_utc": "2026-11-25T05:00:00Z",
+        "price_ore_kwh": 150.8294
+      },
+      {
+        "time_utc": "2026-11-25T05:15:00Z",
+        "price_ore_kwh": 151.8384
+      },
+      {
+        "time_utc": "2026-11-25T05:30:00Z",
+        "price_ore_kwh": 162.7806
+      },
+      {
+        "time_utc": "2026-11-25T05:45:00Z",
+        "price_ore_kwh": 174.5973
+      },
+      {
+        "time_utc": "2026-11-25T06:00:00Z",
+        "price_ore_kwh": 166.7569
+      },
+      {
+        "time_utc": "2026-11-25T06:15:00Z",
+        "price_ore_kwh": 174.9038
+      },
+      {
+        "time_utc": "2026-11-25T06:30:00Z",
+        "price_ore_kwh": 185.3901
+      },
+      {
+        "time_utc": "2026-11-25T06:45:00Z",
+        "price_ore_kwh": 188.1555
+      },
+      {
+        "time_utc": "2026-11-25T07:00:00Z",
+        "price_ore_kwh": 190.9658
+      },
+      {
+        "time_utc": "2026-11-25T07:15:00Z",
+        "price_ore_kwh": 197.5057
+      },
+      {
+        "time_utc": "2026-11-25T07:30:00Z",
+        "price_ore_kwh": 202.8946
+      },
+      {
+        "time_utc": "2026-11-25T07:45:00Z",
+        "price_ore_kwh": 201.5568
+      },
+      {
+        "time_utc": "2026-11-25T08:00:00Z",
+        "price_ore_kwh": 221.1018
+      },
+      {
+        "time_utc": "2026-11-25T08:15:00Z",
+        "price_ore_kwh": 212.5812
+      },
+      {
+        "time_utc": "2026-11-25T08:30:00Z",
+        "price_ore_kwh": 200.1591
+      },
+      {
+        "time_utc": "2026-11-25T08:45:00Z",
+        "price_ore_kwh": 186.3617
+      },
+      {
+        "time_utc": "2026-11-25T09:00:00Z",
+        "price_ore_kwh": 202.8348
+      },
+      {
+        "time_utc": "2026-11-25T09:15:00Z",
+        "price_ore_kwh": 192.4831
+      },
+      {
+        "time_utc": "2026-11-25T09:30:00Z",
+        "price_ore_kwh": 181.0625
+      },
+      {
+        "time_utc": "2026-11-25T09:45:00Z",
+        "price_ore_kwh": 173.4239
+      },
+      {
+        "time_utc": "2026-11-25T10:00:00Z",
+        "price_ore_kwh": 176.5406
+      },
+      {
+        "time_utc": "2026-11-25T10:15:00Z",
+        "price_ore_kwh": 172.953
+      },
+      {
+        "time_utc": "2026-11-25T10:30:00Z",
+        "price_ore_kwh": 170.8677
+      },
+      {
+        "time_utc": "2026-11-25T10:45:00Z",
+        "price_ore_kwh": 170.8453
+      },
+      {
+        "time_utc": "2026-11-25T11:00:00Z",
+        "price_ore_kwh": 165.2546
+      },
+      {
+        "time_utc": "2026-11-25T11:15:00Z",
+        "price_ore_kwh": 166.443
+      },
+      {
+        "time_utc": "2026-11-25T11:30:00Z",
+        "price_ore_kwh": 167.1007
+      },
+      {
+        "time_utc": "2026-11-25T11:45:00Z",
+        "price_ore_kwh": 166.144
+      },
+      {
+        "time_utc": "2026-11-25T12:00:00Z",
+        "price_ore_kwh": 171.0844
+      },
+      {
+        "time_utc": "2026-11-25T12:15:00Z",
+        "price_ore_kwh": 172.4223
+      },
+      {
+        "time_utc": "2026-11-25T12:30:00Z",
+        "price_ore_kwh": 173.9246
+      },
+      {
+        "time_utc": "2026-11-25T12:45:00Z",
+        "price_ore_kwh": 181.0177
+      },
+      {
+        "time_utc": "2026-11-25T13:00:00Z",
+        "price_ore_kwh": 176.1295
+      },
+      {
+        "time_utc": "2026-11-25T13:15:00Z",
+        "price_ore_kwh": 183.7457
+      },
+      {
+        "time_utc": "2026-11-25T13:30:00Z",
+        "price_ore_kwh": 201.0037
+      },
+      {
+        "time_utc": "2026-11-25T13:45:00Z",
+        "price_ore_kwh": 218.4036
+      },
+      {
+        "time_utc": "2026-11-25T14:00:00Z",
+        "price_ore_kwh": 202.4387
+      },
+      {
+        "time_utc": "2026-11-25T14:15:00Z",
+        "price_ore_kwh": 207.9771
+      },
+      {
+        "time_utc": "2026-11-25T14:30:00Z",
+        "price_ore_kwh": 221.3185
+      },
+      {
+        "time_utc": "2026-11-25T14:45:00Z",
+        "price_ore_kwh": 219.7863
+      },
+      {
+        "time_utc": "2026-11-25T15:00:00Z",
+        "price_ore_kwh": 214.7861
+      },
+      {
+        "time_utc": "2026-11-25T15:15:00Z",
+        "price_ore_kwh": 222.9703
+      },
+      {
+        "time_utc": "2026-11-25T15:30:00Z",
+        "price_ore_kwh": 225.6835
+      },
+      {
+        "time_utc": "2026-11-25T15:45:00Z",
+        "price_ore_kwh": 229.301
+      },
+      {
+        "time_utc": "2026-11-25T16:00:00Z",
+        "price_ore_kwh": 218.0822
+      },
+      {
+        "time_utc": "2026-11-25T16:15:00Z",
+        "price_ore_kwh": 222.7386
+      },
+      {
+        "time_utc": "2026-11-25T16:30:00Z",
+        "price_ore_kwh": 227.6641
+      },
+      {
+        "time_utc": "2026-11-25T16:45:00Z",
+        "price_ore_kwh": 219.4799
+      },
+      {
+        "time_utc": "2026-11-25T17:00:00Z",
+        "price_ore_kwh": 217.26
+      },
+      {
+        "time_utc": "2026-11-25T17:15:00Z",
+        "price_ore_kwh": 219.1959
+      },
+      {
+        "time_utc": "2026-11-25T17:30:00Z",
+        "price_ore_kwh": 224.4577
+      },
+      {
+        "time_utc": "2026-11-25T17:45:00Z",
+        "price_ore_kwh": 216.0417
+      },
+      {
+        "time_utc": "2026-11-25T18:00:00Z",
+        "price_ore_kwh": 213.7771
+      },
+      {
+        "time_utc": "2026-11-25T18:15:00Z",
+        "price_ore_kwh": 211.4675
+      },
+      {
+        "time_utc": "2026-11-25T18:30:00Z",
+        "price_ore_kwh": 200.7122
+      },
+      {
+        "time_utc": "2026-11-25T18:45:00Z",
+        "price_ore_kwh": 190.0764
+      },
+      {
+        "time_utc": "2026-11-25T19:00:00Z",
+        "price_ore_kwh": 200.0096
+      },
+      {
+        "time_utc": "2026-11-25T19:15:00Z",
+        "price_ore_kwh": 187.879
+      },
+      {
+        "time_utc": "2026-11-25T19:30:00Z",
+        "price_ore_kwh": 175.7558
+      },
+      {
+        "time_utc": "2026-11-25T19:45:00Z",
+        "price_ore_kwh": 167.3548
+      },
+      {
+        "time_utc": "2026-11-25T20:00:00Z",
+        "price_ore_kwh": 186.5934
+      },
+      {
+        "time_utc": "2026-11-25T20:15:00Z",
+        "price_ore_kwh": 178.9772
+      },
+      {
+        "time_utc": "2026-11-25T20:30:00Z",
+        "price_ore_kwh": 169.612
+      },
+      {
+        "time_utc": "2026-11-25T20:45:00Z",
+        "price_ore_kwh": 159.4247
+      },
+      {
+        "time_utc": "2026-11-25T21:00:00Z",
+        "price_ore_kwh": 166.8765
+      },
+      {
+        "time_utc": "2026-11-25T21:15:00Z",
+        "price_ore_kwh": 160.3814
+      },
+      {
+        "time_utc": "2026-11-25T21:30:00Z",
+        "price_ore_kwh": 160.3141
+      },
+      {
+        "time_utc": "2026-11-25T21:45:00Z",
+        "price_ore_kwh": 152.3765
+      },
+      {
+        "time_utc": "2026-11-25T22:00:00Z",
+        "price_ore_kwh": 161.9659
+      },
+      {
+        "time_utc": "2026-11-25T22:15:00Z",
+        "price_ore_kwh": 161.3082
+      },
+      {
+        "time_utc": "2026-11-25T22:30:00Z",
+        "price_ore_kwh": 158.0121
+      },
+      {
+        "time_utc": "2026-11-25T22:45:00Z",
+        "price_ore_kwh": 153.6845
       }
     ],
     "DK2": [
@@ -1541,6 +1925,390 @@
       {
         "time_utc": "2026-11-24T22:45:00Z",
         "price_ore_kwh": 150.635
+      },
+      {
+        "time_utc": "2026-11-24T23:00:00Z",
+        "price_ore_kwh": 169.2981
+      },
+      {
+        "time_utc": "2026-11-24T23:15:00Z",
+        "price_ore_kwh": 161.226
+      },
+      {
+        "time_utc": "2026-11-24T23:30:00Z",
+        "price_ore_kwh": 160.4038
+      },
+      {
+        "time_utc": "2026-11-24T23:45:00Z",
+        "price_ore_kwh": 160.6878
+      },
+      {
+        "time_utc": "2026-11-25T00:00:00Z",
+        "price_ore_kwh": 162.0631
+      },
+      {
+        "time_utc": "2026-11-25T00:15:00Z",
+        "price_ore_kwh": 161.4278
+      },
+      {
+        "time_utc": "2026-11-25T00:30:00Z",
+        "price_ore_kwh": 159.3425
+      },
+      {
+        "time_utc": "2026-11-25T00:45:00Z",
+        "price_ore_kwh": 156.9432
+      },
+      {
+        "time_utc": "2026-11-25T01:00:00Z",
+        "price_ore_kwh": 158.0046
+      },
+      {
+        "time_utc": "2026-11-25T01:15:00Z",
+        "price_ore_kwh": 155.3139
+      },
+      {
+        "time_utc": "2026-11-25T01:30:00Z",
+        "price_ore_kwh": 154.4693
+      },
+      {
+        "time_utc": "2026-11-25T01:45:00Z",
+        "price_ore_kwh": 153.0118
+      },
+      {
+        "time_utc": "2026-11-25T02:00:00Z",
+        "price_ore_kwh": 156.6966
+      },
+      {
+        "time_utc": "2026-11-25T02:15:00Z",
+        "price_ore_kwh": 155.6278
+      },
+      {
+        "time_utc": "2026-11-25T02:30:00Z",
+        "price_ore_kwh": 154.4319
+      },
+      {
+        "time_utc": "2026-11-25T02:45:00Z",
+        "price_ore_kwh": 155.0971
+      },
+      {
+        "time_utc": "2026-11-25T03:00:00Z",
+        "price_ore_kwh": 154.417
+      },
+      {
+        "time_utc": "2026-11-25T03:15:00Z",
+        "price_ore_kwh": 155.7997
+      },
+      {
+        "time_utc": "2026-11-25T03:30:00Z",
+        "price_ore_kwh": 153.5425
+      },
+      {
+        "time_utc": "2026-11-25T03:45:00Z",
+        "price_ore_kwh": 151.8683
+      },
+      {
+        "time_utc": "2026-11-25T04:00:00Z",
+        "price_ore_kwh": 154.0657
+      },
+      {
+        "time_utc": "2026-11-25T04:15:00Z",
+        "price_ore_kwh": 154.0956
+      },
+      {
+        "time_utc": "2026-11-25T04:30:00Z",
+        "price_ore_kwh": 154.559
+      },
+      {
+        "time_utc": "2026-11-25T04:45:00Z",
+        "price_ore_kwh": 158.1989
+      },
+      {
+        "time_utc": "2026-11-25T05:00:00Z",
+        "price_ore_kwh": 164.9107
+      },
+      {
+        "time_utc": "2026-11-25T05:15:00Z",
+        "price_ore_kwh": 176.72
+      },
+      {
+        "time_utc": "2026-11-25T05:30:00Z",
+        "price_ore_kwh": 207.5062
+      },
+      {
+        "time_utc": "2026-11-25T05:45:00Z",
+        "price_ore_kwh": 215.1897
+      },
+      {
+        "time_utc": "2026-11-25T06:00:00Z",
+        "price_ore_kwh": 212.1851
+      },
+      {
+        "time_utc": "2026-11-25T06:15:00Z",
+        "price_ore_kwh": 228.8451
+      },
+      {
+        "time_utc": "2026-11-25T06:30:00Z",
+        "price_ore_kwh": 236.9396
+      },
+      {
+        "time_utc": "2026-11-25T06:45:00Z",
+        "price_ore_kwh": 246.0432
+      },
+      {
+        "time_utc": "2026-11-25T07:00:00Z",
+        "price_ore_kwh": 243.3973
+      },
+      {
+        "time_utc": "2026-11-25T07:15:00Z",
+        "price_ore_kwh": 254.2349
+      },
+      {
+        "time_utc": "2026-11-25T07:30:00Z",
+        "price_ore_kwh": 251.3648
+      },
+      {
+        "time_utc": "2026-11-25T07:45:00Z",
+        "price_ore_kwh": 249.6831
+      },
+      {
+        "time_utc": "2026-11-25T08:00:00Z",
+        "price_ore_kwh": 226.4533
+      },
+      {
+        "time_utc": "2026-11-25T08:15:00Z",
+        "price_ore_kwh": 220.8477
+      },
+      {
+        "time_utc": "2026-11-25T08:30:00Z",
+        "price_ore_kwh": 217.7085
+      },
+      {
+        "time_utc": "2026-11-25T08:45:00Z",
+        "price_ore_kwh": 204.965
+      },
+      {
+        "time_utc": "2026-11-25T09:00:00Z",
+        "price_ore_kwh": 219.4649
+      },
+      {
+        "time_utc": "2026-11-25T09:15:00Z",
+        "price_ore_kwh": 203.089
+      },
+      {
+        "time_utc": "2026-11-25T09:30:00Z",
+        "price_ore_kwh": 192.4756
+      },
+      {
+        "time_utc": "2026-11-25T09:45:00Z",
+        "price_ore_kwh": 189.329
+      },
+      {
+        "time_utc": "2026-11-25T10:00:00Z",
+        "price_ore_kwh": 203.7542
+      },
+      {
+        "time_utc": "2026-11-25T10:15:00Z",
+        "price_ore_kwh": 203.2235
+      },
+      {
+        "time_utc": "2026-11-25T10:30:00Z",
+        "price_ore_kwh": 197.3413
+      },
+      {
+        "time_utc": "2026-11-25T10:45:00Z",
+        "price_ore_kwh": 211.191
+      },
+      {
+        "time_utc": "2026-11-25T11:00:00Z",
+        "price_ore_kwh": 210.5258
+      },
+      {
+        "time_utc": "2026-11-25T11:15:00Z",
+        "price_ore_kwh": 213.5827
+      },
+      {
+        "time_utc": "2026-11-25T11:30:00Z",
+        "price_ore_kwh": 219.5546
+      },
+      {
+        "time_utc": "2026-11-25T11:45:00Z",
+        "price_ore_kwh": 234.6301
+      },
+      {
+        "time_utc": "2026-11-25T12:00:00Z",
+        "price_ore_kwh": 229.7793
+      },
+      {
+        "time_utc": "2026-11-25T12:15:00Z",
+        "price_ore_kwh": 238.9278
+      },
+      {
+        "time_utc": "2026-11-25T12:30:00Z",
+        "price_ore_kwh": 232.8288
+      },
+      {
+        "time_utc": "2026-11-25T12:45:00Z",
+        "price_ore_kwh": 251.2527
+      },
+      {
+        "time_utc": "2026-11-25T13:00:00Z",
+        "price_ore_kwh": 215.4887
+      },
+      {
+        "time_utc": "2026-11-25T13:15:00Z",
+        "price_ore_kwh": 228.5984
+      },
+      {
+        "time_utc": "2026-11-25T13:30:00Z",
+        "price_ore_kwh": 260.0349
+      },
+      {
+        "time_utc": "2026-11-25T13:45:00Z",
+        "price_ore_kwh": 264.5493
+      },
+      {
+        "time_utc": "2026-11-25T14:00:00Z",
+        "price_ore_kwh": 248.2032
+      },
+      {
+        "time_utc": "2026-11-25T14:15:00Z",
+        "price_ore_kwh": 260.6104
+      },
+      {
+        "time_utc": "2026-11-25T14:30:00Z",
+        "price_ore_kwh": 275.4168
+      },
+      {
+        "time_utc": "2026-11-25T14:45:00Z",
+        "price_ore_kwh": 268.8544
+      },
+      {
+        "time_utc": "2026-11-25T15:00:00Z",
+        "price_ore_kwh": 243.9878
+      },
+      {
+        "time_utc": "2026-11-25T15:15:00Z",
+        "price_ore_kwh": 240.0713
+      },
+      {
+        "time_utc": "2026-11-25T15:30:00Z",
+        "price_ore_kwh": 260.5581
+      },
+      {
+        "time_utc": "2026-11-25T15:45:00Z",
+        "price_ore_kwh": 250.6398
+      },
+      {
+        "time_utc": "2026-11-25T16:00:00Z",
+        "price_ore_kwh": 237.6796
+      },
+      {
+        "time_utc": "2026-11-25T16:15:00Z",
+        "price_ore_kwh": 248.4499
+      },
+      {
+        "time_utc": "2026-11-25T16:30:00Z",
+        "price_ore_kwh": 234.0247
+      },
+      {
+        "time_utc": "2026-11-25T16:45:00Z",
+        "price_ore_kwh": 224.9884
+      },
+      {
+        "time_utc": "2026-11-25T17:00:00Z",
+        "price_ore_kwh": 221.2363
+      },
+      {
+        "time_utc": "2026-11-25T17:15:00Z",
+        "price_ore_kwh": 223.2095
+      },
+      {
+        "time_utc": "2026-11-25T17:30:00Z",
+        "price_ore_kwh": 229.8914
+      },
+      {
+        "time_utc": "2026-11-25T17:45:00Z",
+        "price_ore_kwh": 220.0031
+      },
+      {
+        "time_utc": "2026-11-25T18:00:00Z",
+        "price_ore_kwh": 221.8268
+      },
+      {
+        "time_utc": "2026-11-25T18:15:00Z",
+        "price_ore_kwh": 216.7817
+      },
+      {
+        "time_utc": "2026-11-25T18:30:00Z",
+        "price_ore_kwh": 205.7722
+      },
+      {
+        "time_utc": "2026-11-25T18:45:00Z",
+        "price_ore_kwh": 193.5594
+      },
+      {
+        "time_utc": "2026-11-25T19:00:00Z",
+        "price_ore_kwh": 204.7707
+      },
+      {
+        "time_utc": "2026-11-25T19:15:00Z",
+        "price_ore_kwh": 191.3246
+      },
+      {
+        "time_utc": "2026-11-25T19:30:00Z",
+        "price_ore_kwh": 178.9772
+      },
+      {
+        "time_utc": "2026-11-25T19:45:00Z",
+        "price_ore_kwh": 171.5628
+      },
+      {
+        "time_utc": "2026-11-25T20:00:00Z",
+        "price_ore_kwh": 188.8805
+      },
+      {
+        "time_utc": "2026-11-25T20:15:00Z",
+        "price_ore_kwh": 182.2658
+      },
+      {
+        "time_utc": "2026-11-25T20:30:00Z",
+        "price_ore_kwh": 170.1352
+      },
+      {
+        "time_utc": "2026-11-25T20:45:00Z",
+        "price_ore_kwh": 162.3247
+      },
+      {
+        "time_utc": "2026-11-25T21:00:00Z",
+        "price_ore_kwh": 169.2906
+      },
+      {
+        "time_utc": "2026-11-25T21:15:00Z",
+        "price_ore_kwh": 162.661
+      },
+      {
+        "time_utc": "2026-11-25T21:30:00Z",
+        "price_ore_kwh": 162.9525
+      },
+      {
+        "time_utc": "2026-11-25T21:45:00Z",
+        "price_ore_kwh": 154.7234
+      },
+      {
+        "time_utc": "2026-11-25T22:00:00Z",
+        "price_ore_kwh": 162.5639
+      },
+      {
+        "time_utc": "2026-11-25T22:15:00Z",
+        "price_ore_kwh": 161.5324
+      },
+      {
+        "time_utc": "2026-11-25T22:30:00Z",
+        "price_ore_kwh": 158.3783
+      },
+      {
+        "time_utc": "2026-11-25T22:45:00Z",
+        "price_ore_kwh": 153.961
       }
     ],
     "SE4": [
@@ -2311,6 +3079,390 @@
       {
         "time_utc": "2026-11-24T22:45:00Z",
         "price_ore_kwh": 146.3149
+      },
+      {
+        "time_utc": "2026-11-24T23:00:00Z",
+        "price_ore_kwh": 168.6404
+      },
+      {
+        "time_utc": "2026-11-24T23:15:00Z",
+        "price_ore_kwh": 160.0151
+      },
+      {
+        "time_utc": "2026-11-24T23:30:00Z",
+        "price_ore_kwh": 159.2603
+      },
+      {
+        "time_utc": "2026-11-24T23:45:00Z",
+        "price_ore_kwh": 159.477
+      },
+      {
+        "time_utc": "2026-11-25T00:00:00Z",
+        "price_ore_kwh": 157.7729
+      },
+      {
+        "time_utc": "2026-11-25T00:15:00Z",
+        "price_ore_kwh": 156.5322
+      },
+      {
+        "time_utc": "2026-11-25T00:30:00Z",
+        "price_ore_kwh": 154.2451
+      },
+      {
+        "time_utc": "2026-11-25T00:45:00Z",
+        "price_ore_kwh": 157.0329
+      },
+      {
+        "time_utc": "2026-11-25T01:00:00Z",
+        "price_ore_kwh": 157.8177
+      },
+      {
+        "time_utc": "2026-11-25T01:15:00Z",
+        "price_ore_kwh": 155.0971
+      },
+      {
+        "time_utc": "2026-11-25T01:30:00Z",
+        "price_ore_kwh": 154.6188
+      },
+      {
+        "time_utc": "2026-11-25T01:45:00Z",
+        "price_ore_kwh": 152.8324
+      },
+      {
+        "time_utc": "2026-11-25T02:00:00Z",
+        "price_ore_kwh": 156.8311
+      },
+      {
+        "time_utc": "2026-11-25T02:15:00Z",
+        "price_ore_kwh": 155.7025
+      },
+      {
+        "time_utc": "2026-11-25T02:30:00Z",
+        "price_ore_kwh": 154.5665
+      },
+      {
+        "time_utc": "2026-11-25T02:45:00Z",
+        "price_ore_kwh": 155.6054
+      },
+      {
+        "time_utc": "2026-11-25T03:00:00Z",
+        "price_ore_kwh": 154.3721
+      },
+      {
+        "time_utc": "2026-11-25T03:15:00Z",
+        "price_ore_kwh": 156.1061
+      },
+      {
+        "time_utc": "2026-11-25T03:30:00Z",
+        "price_ore_kwh": 153.4603
+      },
+      {
+        "time_utc": "2026-11-25T03:45:00Z",
+        "price_ore_kwh": 151.7263
+      },
+      {
+        "time_utc": "2026-11-25T04:00:00Z",
+        "price_ore_kwh": 151.9355
+      },
+      {
+        "time_utc": "2026-11-25T04:15:00Z",
+        "price_ore_kwh": 151.9953
+      },
+      {
+        "time_utc": "2026-11-25T04:30:00Z",
+        "price_ore_kwh": 153.9461
+      },
+      {
+        "time_utc": "2026-11-25T04:45:00Z",
+        "price_ore_kwh": 158.1989
+      },
+      {
+        "time_utc": "2026-11-25T05:00:00Z",
+        "price_ore_kwh": 164.0437
+      },
+      {
+        "time_utc": "2026-11-25T05:15:00Z",
+        "price_ore_kwh": 177.4824
+      },
+      {
+        "time_utc": "2026-11-25T05:30:00Z",
+        "price_ore_kwh": 211.1611
+      },
+      {
+        "time_utc": "2026-11-25T05:45:00Z",
+        "price_ore_kwh": 219.6144
+      },
+      {
+        "time_utc": "2026-11-25T06:00:00Z",
+        "price_ore_kwh": 215.0402
+      },
+      {
+        "time_utc": "2026-11-25T06:15:00Z",
+        "price_ore_kwh": 232.9185
+      },
+      {
+        "time_utc": "2026-11-25T06:30:00Z",
+        "price_ore_kwh": 240.3404
+      },
+      {
+        "time_utc": "2026-11-25T06:45:00Z",
+        "price_ore_kwh": 250.1391
+      },
+      {
+        "time_utc": "2026-11-25T07:00:00Z",
+        "price_ore_kwh": 246.6635
+      },
+      {
+        "time_utc": "2026-11-25T07:15:00Z",
+        "price_ore_kwh": 257.7179
+      },
+      {
+        "time_utc": "2026-11-25T07:30:00Z",
+        "price_ore_kwh": 253.7865
+      },
+      {
+        "time_utc": "2026-11-25T07:45:00Z",
+        "price_ore_kwh": 252.0375
+      },
+      {
+        "time_utc": "2026-11-25T08:00:00Z",
+        "price_ore_kwh": 224.8538
+      },
+      {
+        "time_utc": "2026-11-25T08:15:00Z",
+        "price_ore_kwh": 219.4126
+      },
+      {
+        "time_utc": "2026-11-25T08:30:00Z",
+        "price_ore_kwh": 216.834
+      },
+      {
+        "time_utc": "2026-11-25T08:45:00Z",
+        "price_ore_kwh": 204.9874
+      },
+      {
+        "time_utc": "2026-11-25T09:00:00Z",
+        "price_ore_kwh": 219.0464
+      },
+      {
+        "time_utc": "2026-11-25T09:15:00Z",
+        "price_ore_kwh": 202.349
+      },
+      {
+        "time_utc": "2026-11-25T09:30:00Z",
+        "price_ore_kwh": 192.0346
+      },
+      {
+        "time_utc": "2026-11-25T09:45:00Z",
+        "price_ore_kwh": 189.4186
+      },
+      {
+        "time_utc": "2026-11-25T10:00:00Z",
+        "price_ore_kwh": 205.0024
+      },
+      {
+        "time_utc": "2026-11-25T10:15:00Z",
+        "price_ore_kwh": 204.8529
+      },
+      {
+        "time_utc": "2026-11-25T10:30:00Z",
+        "price_ore_kwh": 198.5521
+      },
+      {
+        "time_utc": "2026-11-25T10:45:00Z",
+        "price_ore_kwh": 213.7621
+      },
+      {
+        "time_utc": "2026-11-25T11:00:00Z",
+        "price_ore_kwh": 213.7397
+      },
+      {
+        "time_utc": "2026-11-25T11:15:00Z",
+        "price_ore_kwh": 216.8116
+      },
+      {
+        "time_utc": "2026-11-25T11:30:00Z",
+        "price_ore_kwh": 224.3082
+      },
+      {
+        "time_utc": "2026-11-25T11:45:00Z",
+        "price_ore_kwh": 241.9847
+      },
+      {
+        "time_utc": "2026-11-25T12:00:00Z",
+        "price_ore_kwh": 236.1847
+      },
+      {
+        "time_utc": "2026-11-25T12:15:00Z",
+        "price_ore_kwh": 246.4767
+      },
+      {
+        "time_utc": "2026-11-25T12:30:00Z",
+        "price_ore_kwh": 238.5167
+      },
+      {
+        "time_utc": "2026-11-25T12:45:00Z",
+        "price_ore_kwh": 258.4055
+      },
+      {
+        "time_utc": "2026-11-25T13:00:00Z",
+        "price_ore_kwh": 217.417
+      },
+      {
+        "time_utc": "2026-11-25T13:15:00Z",
+        "price_ore_kwh": 232.059
+      },
+      {
+        "time_utc": "2026-11-25T13:30:00Z",
+        "price_ore_kwh": 265.6555
+      },
+      {
+        "time_utc": "2026-11-25T13:45:00Z",
+        "price_ore_kwh": 266.6421
+      },
+      {
+        "time_utc": "2026-11-25T14:00:00Z",
+        "price_ore_kwh": 250.0867
+      },
+      {
+        "time_utc": "2026-11-25T14:15:00Z",
+        "price_ore_kwh": 262.8003
+      },
+      {
+        "time_utc": "2026-11-25T14:30:00Z",
+        "price_ore_kwh": 277.375
+      },
+      {
+        "time_utc": "2026-11-25T14:45:00Z",
+        "price_ore_kwh": 270.439
+      },
+      {
+        "time_utc": "2026-11-25T15:00:00Z",
+        "price_ore_kwh": 246.3571
+      },
+      {
+        "time_utc": "2026-11-25T15:15:00Z",
+        "price_ore_kwh": 239.1893
+      },
+      {
+        "time_utc": "2026-11-25T15:30:00Z",
+        "price_ore_kwh": 261.2009
+      },
+      {
+        "time_utc": "2026-11-25T15:45:00Z",
+        "price_ore_kwh": 251.0509
+      },
+      {
+        "time_utc": "2026-11-25T16:00:00Z",
+        "price_ore_kwh": 239.1893
+      },
+      {
+        "time_utc": "2026-11-25T16:15:00Z",
+        "price_ore_kwh": 250.4231
+      },
+      {
+        "time_utc": "2026-11-25T16:30:00Z",
+        "price_ore_kwh": 232.9409
+      },
+      {
+        "time_utc": "2026-11-25T16:45:00Z",
+        "price_ore_kwh": 224.4577
+      },
+      {
+        "time_utc": "2026-11-25T17:00:00Z",
+        "price_ore_kwh": 220.7505
+      },
+      {
+        "time_utc": "2026-11-25T17:15:00Z",
+        "price_ore_kwh": 223.1049
+      },
+      {
+        "time_utc": "2026-11-25T17:30:00Z",
+        "price_ore_kwh": 229.9886
+      },
+      {
+        "time_utc": "2026-11-25T17:45:00Z",
+        "price_ore_kwh": 219.9956
+      },
+      {
+        "time_utc": "2026-11-25T18:00:00Z",
+        "price_ore_kwh": 222.2752
+      },
+      {
+        "time_utc": "2026-11-25T18:15:00Z",
+        "price_ore_kwh": 216.7667
+      },
+      {
+        "time_utc": "2026-11-25T18:30:00Z",
+        "price_ore_kwh": 205.7573
+      },
+      {
+        "time_utc": "2026-11-25T18:45:00Z",
+        "price_ore_kwh": 193.5369
+      },
+      {
+        "time_utc": "2026-11-25T19:00:00Z",
+        "price_ore_kwh": 205.107
+      },
+      {
+        "time_utc": "2026-11-25T19:15:00Z",
+        "price_ore_kwh": 191.6011
+      },
+      {
+        "time_utc": "2026-11-25T19:30:00Z",
+        "price_ore_kwh": 178.9996
+      },
+      {
+        "time_utc": "2026-11-25T19:45:00Z",
+        "price_ore_kwh": 171.5254
+      },
+      {
+        "time_utc": "2026-11-25T20:00:00Z",
+        "price_ore_kwh": 189.3888
+      },
+      {
+        "time_utc": "2026-11-25T20:15:00Z",
+        "price_ore_kwh": 182.7816
+      },
+      {
+        "time_utc": "2026-11-25T20:30:00Z",
+        "price_ore_kwh": 170.4865
+      },
+      {
+        "time_utc": "2026-11-25T20:45:00Z",
+        "price_ore_kwh": 161.3007
+      },
+      {
+        "time_utc": "2026-11-25T21:00:00Z",
+        "price_ore_kwh": 171.3087
+      },
+      {
+        "time_utc": "2026-11-25T21:15:00Z",
+        "price_ore_kwh": 164.1559
+      },
+      {
+        "time_utc": "2026-11-25T21:30:00Z",
+        "price_ore_kwh": 163.4832
+      },
+      {
+        "time_utc": "2026-11-25T21:45:00Z",
+        "price_ore_kwh": 153.7144
+      },
+      {
+        "time_utc": "2026-11-25T22:00:00Z",
+        "price_ore_kwh": 162.7657
+      },
+      {
+        "time_utc": "2026-11-25T22:15:00Z",
+        "price_ore_kwh": 161.936
+      },
+      {
+        "time_utc": "2026-11-25T22:30:00Z",
+        "price_ore_kwh": 158.4082
+      },
+      {
+        "time_utc": "2026-11-25T22:45:00Z",
+        "price_ore_kwh": 153.8863
       }
     ]
   },
@@ -2326,10 +3478,10 @@
     "tomorrow_date": "2026-11-25",
     "tomorrow_expected_intervals": 96,
     "tomorrow_counts": {
-      "DK1": 0,
-      "DK2": 0,
-      "SE4": 0
+      "DK1": 96,
+      "DK2": 96,
+      "SE4": 96
     },
-    "tomorrow_complete": false
+    "tomorrow_complete": true
   }
 }
