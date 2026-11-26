@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-25T13:14:28Z",
+  "generated_at": "2026-11-26T11:10:28Z",
   "source": "Energinet Energi Data Service / DatahubPricelist",
   "unit": "ore_per_kwh_ex_vat",
   "method": "Unweighted hourly median across available selected grid companies",
@@ -69,7 +69,7 @@
         "Cerius A/S"
       ],
       "valid_from": "2027-04-01T00:00:00+02:00",
-      "valid_to": "2027-05-24T00:00:00+02:00",
+      "valid_to": "2027-05-25T00:00:00+02:00",
       "periods": [
         {
           "valid_from": "2027-01-01T00:00:00+01:00",
@@ -106,7 +106,7 @@
         },
         {
           "valid_from": "2027-04-01T00:00:00+02:00",
-          "valid_to": "2027-05-24T00:00:00+02:00",
+          "valid_to": "2027-05-25T00:00:00+02:00",
           "hourly_ex_vat_ore": [
             12.3319,
             12.3319,
@@ -5066,7 +5066,7 @@
         "Radius Elnet A/S"
       ],
       "valid_from": "2027-04-01T00:00:00+02:00",
-      "valid_to": "2027-05-24T00:00:00+02:00",
+      "valid_to": "2027-05-25T00:00:00+02:00",
       "periods": [
         {
           "valid_from": "2027-01-01T00:00:00+01:00",
@@ -5103,7 +5103,7 @@
         },
         {
           "valid_from": "2027-04-01T00:00:00+02:00",
-          "valid_to": "2027-05-24T00:00:00+02:00",
+          "valid_to": "2027-05-25T00:00:00+02:00",
           "hourly_ex_vat_ore": [
             11.5933,
             11.5933,
